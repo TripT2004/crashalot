@@ -20,5 +20,11 @@
 @media(max-width:1000px){.decade-trend__grid{grid-template-columns:minmax(0,1fr) 240px;gap:20px}.decade-trend__note{padding-left:18px}.decade-trend__note h2{font-size:24px}}
 @media(max-width:700px){.decade-trend__grid{grid-template-columns:1fr;gap:18px}.decade-trend__note{min-height:0}.decade-trend__note h2{font-size:26px}.decade-trend-view .evidence-heading h1{font-size:32px}.decade-trend__transport{align-items:start}.decade-trend__transport>span{max-width:50%}}
 
-.decade-trend__plot{min-width:0;overflow-x:auto}.decade-trend__plot svg{min-width:580px}.decade-trend__tick{font-size:13px}
+.decade-trend__plot{min-width:0;overflow-x:auto}.decade-trend__plot svg{width:100%}.decade-trend__tick{font-size:13px}
 
+
+.decade-trend--narrow .decade-trend__value{font-size:14px}
+.decade-trend--narrow .decade-trend__tick,.decade-trend--narrow .decade-trend__axis{font-size:11px}
+.decade-trend--narrow .decade-trend__partial{font-size:10px}
+
+@media(max-width:360px){.decade-trend--narrow .decade-trend__value{font-size:12px}}

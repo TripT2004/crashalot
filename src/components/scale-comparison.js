@@ -230,6 +230,12 @@ export async function mountScaleComparison(container) {
     });
     render();
   }
+  function finishBeat() {
+    clock?.stop(); running = false; elapsed = stageLimit;
+    lastFrame = null; tickOpacity.clear();
+    rows.forEach(row => { row.lastValueTime = -Infinity; });
+    render();
+  }
   function advanceStage() {
     if (running) return;
     if (elapsed < accidentEnd) stageLimit = accidentEnd;
@@ -253,6 +259,7 @@ export async function mountScaleComparison(container) {
   layout();
   return {
     resize: layout,
+    finishBeat,
     showLastBeat() {
       stop();
       elapsed = END;
@@ -264,7 +271,7 @@ export async function mountScaleComparison(container) {
     getNavigationState() {
       const step = elapsed >= END ? 4 : elapsed >= departureEnd ? 3 : elapsed >= accidentEnd ? 2 : 1;
       const action = running ? (elapsed < accidentEnd ? 'Counting fatal accidents' : elapsed < departureEnd ? 'Counting departures' : 'Adding the years') : ['Count fatal accidents', 'Count departures', 'Add the following years', 'Continue the story'][step - 1];
-      return { step, total: 4, running, action };
+      return { step, total: 4, running, inProgress: elapsed > 0 && elapsed < stageLimit, action };
     },
     previousBeat() {
       if (!active || elapsed === 0) return false;
@@ -282,7 +289,7 @@ export async function mountScaleComparison(container) {
       advanceStage();
       return true;
     },
-    setActive(value) { if (value === active) return; active = value; if (active) restart(); else stop(); },
+    setActive(value) { if (value === active) return; active = value; if (!active) { wasRunning = false; stop(); } else render(); },
     destroy() { stop(); destroyed = true; observer.disconnect(); window.removeEventListener('resize', layout); document.removeEventListener('visibilitychange', onVisibility); reducedMotion.removeEventListener('change', onMotion); root.remove(); },
   };
 }

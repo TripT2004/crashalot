@@ -42,8 +42,8 @@ let autoPlayback = false;
 playbackToggle.addEventListener('click', () => {
   autoPlayback = !autoPlayback;
   playbackToggle.setAttribute('aria-pressed', String(autoPlayback));
-  playbackToggle.setAttribute('aria-label', autoPlayback ? 'Enable manual playback' : 'Enable auto playback');
-  playbackToggle.title = autoPlayback ? 'Auto playback · switch to Manual' : 'Manual playback · switch to Auto';
+  playbackToggle.setAttribute('aria-label', 'Auto chart reveals');
+  playbackToggle.title = 'Automatically reveal the decades; never advances slides';
   chartInstances.forEach(chart => chart.setPlaybackMode?.(autoPlayback));
 });
 const status = document.querySelector('#presentation-theme-status');
@@ -109,25 +109,29 @@ function updateNavigation() {
   const state = chart?.getNavigationState?.();
   const cover = slide.id === 'welcome';
   const hookStep = Number(document.getElementById('flight-1282').dataset.hookStep || 0);
-  let position = `${presentation.getIndices().h + 1} / ${presentation.getTotalSlides()} · ${slide.dataset.beat || 'The journey'}`;
+  const slidePosition = `${presentation.getIndices().h + 1} of ${presentation.getTotalSlides()}`;
+  let position = `${slidePosition} · ${slide.dataset.beat || 'The journey'}`;
   if (cover) position = 'An invitation to look closer';
-  if (slide.id === 'flight-1282') position = `Flight 1282 · Beat ${hookStep + 1} of 5`;
-  if (['change-over-time', 'counts-in-context'].includes(slide.id)) position = state ? `Beat ${state.step} of ${state.total} · ${state.action}` : 'Loading the comparison…';
+  if (slide.id === 'flight-1282') position = `${slidePosition} · Reveal ${hookStep + 1} of 5`;
+  if (['change-over-time', 'counts-in-context'].includes(slide.id)) position = state ? `${slidePosition} · Reveal ${state.step} of ${state.total}` : `${slidePosition} · Loading…`;
   if (storyPosition.textContent !== position) storyPosition.textContent = position;
   storyBack.hidden = cover;
-  storyNext.querySelector('[data-next-label]').textContent = cover ? 'Start the journey' : 'Next';
-  storyNext.disabled = presentation.isLastSlide() || !!state?.running || (['change-over-time', 'counts-in-context'].includes(slide.id) && !chart);
-  storyNext.setAttribute('aria-label', cover ? 'Start the journey' : state ? `Next: ${state.action.toLowerCase()}` : 'Next');
+  const finishing = state?.running || state?.inProgress;
+  playbackToggle.hidden = !chart?.setPlaybackMode;
+  storyNext.querySelector('[data-next-label]').textContent = cover ? 'Start the journey' : finishing ? 'Finish animation' : 'Next';
+  storyNext.disabled = presentation.isLastSlide() || (['change-over-time', 'counts-in-context'].includes(slide.id) && !chart);
+  storyNext.setAttribute('aria-label', cover ? 'Start the journey' : finishing ? 'Finish animation' : state ? `Next: ${state.action.toLowerCase()}` : 'Next');
 }
 function previousBeat() {
   const chart = chartInstances.find(chart => chart.slide === presentation.getCurrentSlide());
   if (chart?.previousBeat?.()) return;
   presentation.prev();
-  chartInstances.find(chart => chart.slide === presentation.getCurrentSlide())?.showLastBeat?.();
 }
 function nextBeat() {
   const slide = presentation.getCurrentSlide();
   const chart = chartInstances.find(chart => chart.slide === slide);
+  const state = chart?.getNavigationState?.();
+  if (state?.running || state?.inProgress) { chart.finishBeat?.(); return; }
   if (chart?.nextBeat?.()) return;
   // Wait for the comparison to mount rather than skipping its opening beat.
   if (['change-over-time', 'counts-in-context'].includes(slide?.id) && !chart) return;
@@ -174,7 +178,11 @@ presentation.initialize({
   progress: true,
   slideNumber: false,
   showSlideNumber: 'all',
-  keyboard: { 32: nextBeat, 34: nextBeat, 39: nextBeat, 40: nextBeat, 78: nextBeat, 37: previousBeat, 33: previousBeat, 80: previousBeat },
+  // Up/Down, Space and Page keys belong to reading, including focused headings.
+  keyboardCondition: event => !['ArrowUp', 'ArrowDown', ' ', 'PageUp', 'PageDown'].includes(event.key) && !event.target.closest('button, a, input, select, textarea, summary, [role=button], [contenteditable=true]'),
+  keyboard: { 32: null, 33: null, 34: null, 38: null, 40: null, 39: nextBeat, 78: nextBeat, 37: previousBeat, 80: previousBeat },
+  // Touch gestures scroll chart pages; explicit navigation remains available.
+  touch: false,
   navigationMode: 'linear',
   transition: reducedMotion.matches ? 'none' : 'fade',
   transitionSpeed: 'fast',

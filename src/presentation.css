@@ -131,3 +131,7 @@ body.presentation-cover .presentation-footer, body.presentation-hook .presentati
 [data-bs-theme="dark"] .utility-button .icon-moon{display:none}
 #playback-toggle[aria-pressed="true"] .icon-auto{display:block}
 #playback-toggle[aria-pressed="true"] .icon-manual{display:none}
+
+.utility-button[hidden]{display:none}
+.playback-button{width:auto;border-radius:6px;gap:6px;font-size:11px;white-space:nowrap;padding:8px}
+.playback-button[aria-pressed="true"]{background:var(--bs-tertiary-bg);color:var(--bs-body-color)}

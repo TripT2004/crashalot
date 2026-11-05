@@ -14,7 +14,8 @@
     "data:prepare": "uv run python scripts/prepare_data.py",
     "themes:prepare": "node scripts/prepare_themes.mjs",
     "data:flight": "uv run python scripts/build_flight_exploration.py",
-    "test:flight": "playwright test tests/flight-exploration.spec.js"
+    "test:flight": "playwright test tests/flight-exploration.spec.js",
+    "test:story": "playwright test tests/story-transport.spec.js"
   },
   "type": "module",
   "dependencies": {

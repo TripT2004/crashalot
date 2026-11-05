@@ -111,9 +111,15 @@ export async function mountDecadeTrend(container) {
     root.transition('reveal').duration((end - start) * motion.revealUnitMs).ease(easeCubicInOut).tween('decades', () => t => { progress = start + (end - start) * t; render(); }).on('end', finish);
   }
   function resize() {
-    const width = Math.max(580, Math.min(1000, plot.node().clientWidth));
-    svg.attr('viewBox', `0 0 ${width} 390`);
+    const width = Math.max(260, Math.min(1000, plot.node().clientWidth));
+    const narrow = width < 580;
+    svg.attr('viewBox', `0 0 ${width} ${narrow ? 440 : 390}`);
+    marks.select('.decade-trend__tick')
+      .attr('text-anchor', narrow ? 'end' : 'middle');
+    marks.select('.decade-trend__partial').attr('y', narrow ? 427 : 375);
+    root.classed('decade-trend--narrow', narrow);
     x.range([55, width - 12]);
+    marks.select('.decade-trend__tick').attr('transform', d => narrow ? `rotate(-50,${x(d.label) + x.bandwidth() / 2},354)` : null);
     svg.select('.decade-trend__axis').call(axisLeft(y).tickValues([0, 250, 500, 750, 1000]).tickSize(-(width - 67)).tickFormat(format(',d'))).call(g => g.select('.domain').remove());
     const lines = svg.selectAll(':scope > line');
     lines.filter((d, i) => i === 0).attr('x2', width - 12);
@@ -127,12 +133,16 @@ export async function mountDecadeTrend(container) {
   render();
   return {
     resize,
+    finishBeat() {
+      clearAdvance(); root.interrupt('reveal'); running = false; autoPaused = true;
+      progress = beats[stage].end; render(); notify();
+    },
     setPlaybackMode(value) {
       auto = value; autoPaused = false; clearAdvance(); render(); notify();
       if (auto && active) { if (progress < beats[stage].end && !running) play(); else queueAdvance(); }
     },
     setActive(value) { if (active === value) return; active = value; if (!value) stop(); else if (!started) { started = true; autoPaused = false; play(); } },
-    getNavigationState() { return { step: stage + 1, total: beats.length, running, action: progress < beats[stage].end ? (stage === 2 ? 'Connect the counts' : 'Reveal the decades') : stage === 2 ? 'Continue the story' : beats[stage + 1].period }; },
+    getNavigationState() { return { step: stage + 1, total: beats.length, running, inProgress: progress > (stage === 0 ? 0 : beats[stage - 1].end) && progress < beats[stage].end, action: progress < beats[stage].end ? (stage === 2 ? 'Connect the counts' : 'Reveal the decades') : stage === 2 ? 'Continue the story' : beats[stage + 1].period }; },
     nextBeat() { if (running) return true; clearAdvance(); autoPaused = false; if (progress < beats[stage].end) { play(); return true; } if (stage === 2) return false; stage++; play(); return true; },
     previousBeat() { if (stage === 0 && progress === 0) return false; stop(); if (stage > 0) { stage--; progress = beats[stage].end; } else progress = 0; render(); notify(); return true; },
     showLastBeat() { stop(); stage = 2; progress = 10; started = true; render(); notify(); },
