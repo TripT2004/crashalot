@@ -1,0 +1,107 @@
+<div class="flight-exploration" data-prevent-swipe>
+  <p class="cohort-caption"></p>
+  <div class="sankey-stage">
+    <svg
+      class="flight-flow"
+      role="group"
+      aria-label="Sequential accident-phase splits; select a ribbon or use the phase buttons"
+    ></svg>
+  </div>
+  <div
+    class="phase-controls"
+    role="group"
+    aria-label="Filter recorded accident phase"
+  >
+    <button type="button" data-cohort="all">All records</button>
+    <button type="button" data-cohort="departure">Departure</button>
+    <button type="button" data-cohort="in_flight">In flight</button>
+    <button type="button" data-cohort="arrival">Arrival</button>
+    <button type="button" data-cohort="unresolved">Ground / unknown</button>
+    <button type="button" class="clear-selection" data-clear-selection>
+      Clear selection
+    </button>
+  </div>
+  <div class="selection-row">
+    <p class="selection-label" role="status" aria-live="polite"></p>
+    <button type="button" class="jump-to-causes">Compare causes below ↓</button>
+  </div>
+  <div class="area-section" role="region" aria-labelledby="flight-causes-title">
+    <div class="area-heading">
+      <h2 id="flight-causes-title" tabindex="-1">
+        How do the recorded causes change?
+      </h2>
+      <div class="measure-controls" role="group" aria-label="Ribbon thickness">
+        <button type="button" data-measure="count" aria-pressed="true">
+          Count</button
+        ><button type="button" data-measure="percentage" aria-pressed="false">
+          Percentage
+        </button>
+      </div>
+    </div>
+    <p class="area-reading">Order = rank · thickness = count or percentage.</p>
+    <div
+      class="cause-legend"
+      role="group"
+      aria-label="Highlight a recorded cause"
+    ></div>
+    <div
+      class="area-stage"
+      role="group"
+      aria-label="Area bump: four recorded causes across eleven five-year periods"
+    ></div>
+    <p class="area-detail"></p>
+    <p class="area-caption"></p>
+  </div>
+  <details class="source-inspector evidence-source">
+    <summary>Source, scope & exact values</summary>
+    <p>
+      Worldwide archive · flight_type exactly “Scheduled Revenue Flight” ·
+      1970–2024. 2025 is the endpoint and is excluded. This narrows the previous
+      1950–2024 view. The ribbons partition accident records by their recorded
+      phase; continuation means the accident was recorded later, not a measured
+      successful flight. Ground and missing phases are not forced into a flight
+      sequence.
+    </p>
+    <p>
+      The four causes are the archive’s broad classifications, not reviewed
+      technical failure domains. Others and Not Recorded stay in the Sankey and
+      source records. The area chart excludes them; Percentage uses the four
+      displayed causes within each selected phase and period. Ribbon order is
+      rank, thickness is count or share. Smooth crossings are visual
+      interpolation. These records do not measure risk per flight or establish
+      why safety changed.
+    </p>
+    <div class="exact-table-wrap">
+      <table class="exact-table">
+        <caption>
+          All eleven periods · choose a value to highlight its source records
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Period</th>
+            <th scope="col">Weather</th>
+            <th scope="col">Technical</th>
+            <th scope="col">Human Factor</th>
+            <th scope="col">Intentional Acts</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="inspector-caption"></p>
+    <div class="inspect-rows"></div>
+    <p class="provenance"></p>
+    <p>
+      <a
+        href="https://huggingface.co/datasets/MauroPello/planecrashdata"
+        target="_blank"
+        rel="noreferrer"
+        >MauroPello · PlaneCrashData</a
+      >
+      (publisher-declared CC BY 4.0).
+      <a href="data/flight-exploration.json" download
+        >Download the source-backed chart JSON</a
+      >.
+    </p>
+  </details>
+</div>

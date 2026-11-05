@@ -1,6 +1,6 @@
 # crashalot
 
-An aviation data presentation for the 6730 group project. Narrative, evidence, charts, interactions, and visual language are developed together, desktop first. The presentation currently contains seven pages: a landing page and six question-led chapter previews. These previews do not represent finished visualizations.
+An aviation data presentation for the 6730 group project. Narrative, evidence, charts, interactions, and visual language are developed together, desktop first. The presentation combines a landing page, Flight 1282 opening, count and decade-trend beats, question-led chapter previews, and a linked flight-phase/cause exploration. Remaining storyboard placeholders are not finished visualizations.
 
 ## Run locally
 
@@ -37,3 +37,11 @@ The earlier website, chart gallery, generated gallery payload, previews, and pro
 ## Component study
 
 `components.html` composes existing Bootstrap controls and a D3 evidence specimen. Theme choices persist locally. Library theme colors feed semantic chart roles; data and scales stay invariant. Bootswatch CSS is copied locally with its remote Google Fonts imports removed so the study uses one system font without runtime font requests. Run `npm run themes:prepare` after updating Bootswatch. Upstream license headers are retained in `src/vendor/`.
+
+## Linked flight-phase and cause exploration
+
+The `#/flight-phase` chapter integrates the approved sequential Sankey and Nivo AreaBump. It shares original IDs across both views, uses eleven five-year periods (1970–2024), and provides Count/Percentage, keyboard selections, an exact-values table, and reduced-motion handling. It follows the presentation’s existing light/dark palette and narration. See [source and interaction contract](docs/flight-exploration-source.md) and the [motion/UX PASS](docs/flight-exploration-motion-review.md).
+
+The committed `public/data/flight-exploration.json` lets a fresh checkout run without the ignored raw snapshot. To regenerate from the matching retained source, use `npm run data:flight`; to verify it without writing, use `uv run python scripts/build_flight_exploration.py --check`.
+
+Run `npm run test:flight` for the production-browser regression checks (requires Google Chrome). The Playwright web-server configuration builds and starts the site unless port 5175 already serves a local preview. Set `FLIGHT_SCREENSHOT_DIR` to an existing absolute directory to retain desktop/mobile screenshots.

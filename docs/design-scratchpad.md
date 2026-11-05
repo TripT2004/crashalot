@@ -85,3 +85,10 @@ Playback follow-up: a top Manual / Auto toggle controls the second visualization
 ## Motion direction revision · October 26, 2026
 
 Latest user direction supersedes the six-beat treatment: three beats (rise/peak, sustained decline, partial decade plus line transformation). The final segment MUST be dashed, rather than omitted; the five-year label and hollow marker remain. Move playback out of the chart into a quiet header icon beside the sun/moon theme switch, replacing Appearance. Timing is provisional for a later motion-design pass. Music is a future addition only.
+
+
+## Linked phase/cause exploration · November 5, 2026
+
+User-approved prototype transferred to the `flight-phase` chapter, almost unchanged in chart structure. Current confirmed scope: exact Scheduled Revenue Flight label, 1970–2024, eleven complete five-year bins; 2025 is the right boundary. The sequential Sankey partitions accident records by phase (with ground/missing separate), rather than measuring successful flights. Nivo AreaBump shows Weather, Technical, Human Factor, Intentional Acts; Others and Not Recorded are retained in source/Sankey and disclosed below the cause chart. Count/Percentage toggles use the same selected identities and an explicit four-cause denominator.
+
+One optional explore beat; no autoplay selection or new click gate. Added keyboard equivalents, exact-value table, focus-aware cause jump, and reduced-motion lifecycle. Source JSON is generated from the retained Parquet with ID/checksum/partition checks. Reviewed against existing narration and style; motion/interaction expert gave a PASS after code and desktop/mobile screenshots. See [source contract](flight-exploration-source.md) and [review](flight-exploration-motion-review.md). The prior operation→phase taxonomy component remains only for historical/component-study use.

@@ -30,6 +30,7 @@ async function mountChart(id, mount) {
 }
 mountChart('scale-comparison-chart', mountScaleComparison);
 mountChart('decade-trend-chart', mountDecadeTrend);
+mountChart('flight-exploration-chart', async host => (await import('./components/flight-exploration.js')).mountFlightExploration(host));
 
 const themeOptions = {
   default: { url: baselineUrl, mode: 'light' },

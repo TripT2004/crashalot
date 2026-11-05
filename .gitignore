@@ -12,3 +12,6 @@ dist/
 data/raw/
 data/interim/
 data/processed/
+
+test-results/
+playwright-report/

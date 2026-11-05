@@ -4,6 +4,7 @@
   "private": true,
   "description": "Interactive aviation safety experience for the 6730 group project",
   "devDependencies": {
+    "@playwright/test": "1.58.2",
     "vite": "^8.3.5"
   },
   "scripts": {
@@ -11,16 +12,21 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
     "data:prepare": "uv run python scripts/prepare_data.py",
-    "themes:prepare": "node scripts/prepare_themes.mjs"
+    "themes:prepare": "node scripts/prepare_themes.mjs",
+    "data:flight": "uv run python scripts/build_flight_exploration.py",
+    "test:flight": "playwright test tests/flight-exploration.spec.js"
   },
   "type": "module",
   "dependencies": {
+    "@nivo/bump": "0.99.0",
     "bootstrap": "^5.3.8",
     "bootswatch": "^5.3.8",
     "d3": "^7.9.0",
     "d3-sankey": "^0.12.3",
     "d3-svg-annotation": "^2.5.1",
     "number-flow": "^0.6.2",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "reveal.js": "^6.0.2"
   },
   "overrides": {

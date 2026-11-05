@@ -1,5 +1,7 @@
 # Flight-phase Sankey: source and interpretation
 
+Historical operation→phase component. The current presentation chapter uses the approved linked sequential classification; see [current source contract](flight-exploration-source.md). This document describes the earlier component-study view.
+
 The chart classifies accident records from operation type into their recorded accident phase. It does **not** trace a cohort of flights through takeoff, cruise and landing. The retained accident archive contains no successful-flight denominator, so a measured all-flight flow cannot be reconstructed from it. No synthetic journeys are added.
 
 ## Retained evidence

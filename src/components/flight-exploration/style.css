@@ -1,0 +1,294 @@
+.flight-exploration {
+  --foreground: var(--bs-body-color);
+  --muted-foreground: var(--bs-secondary-color);
+  --border: var(--bs-border-color);
+  --popover: var(--bs-body-bg);
+  --popover-foreground: var(--bs-body-color);
+  color: var(--bs-body-color);
+  font-family: var(--bs-font-sans-serif);
+  text-align: left;
+}
+.flight-exploration-view .evidence-heading {
+  grid-template-columns: 1fr 290px;
+  gap: 32px;
+  padding-bottom: 16px;
+  margin-bottom: 14px;
+}
+.flight-exploration-view .evidence-heading h1 {
+  font-size: clamp(32px, 3.3vw, 52px);
+  max-width: 25ch;
+  line-height: 1.07;
+}
+.flight-exploration .cohort-caption {
+  font-size: 12px;
+  color: var(--bs-secondary-color);
+  margin: 0;
+}
+.flight-exploration .sankey-stage {
+  position: relative;
+  margin-top: 10px;
+}
+.flight-exploration .flight-flow {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+.flight-exploration .flight-flow text {
+  fill: var(--bs-body-color);
+  font-size: 12px;
+  font-weight: 400;
+}
+.flight-exploration .flow-base {
+  fill: none;
+  stroke-opacity: 0.22;
+}
+.flight-exploration .flow-selected {
+  fill: none;
+  pointer-events: none;
+  stroke-opacity: 0.72;
+}
+.flight-exploration .flow-hit {
+  fill: none;
+  stroke: transparent;
+  pointer-events: stroke;
+  cursor: pointer;
+}
+.flight-exploration .flow-hit:focus-visible {
+  stroke: var(--bs-body-color);
+  stroke-opacity: 0.22;
+  outline: none;
+}
+.flight-exploration .flow-node {
+  fill: var(--bs-body-color);
+  fill-opacity: 0.65;
+}
+.flight-exploration .phase-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.flight-exploration .phase-controls button,
+.flight-exploration .measure-controls button {
+  color: var(--bs-body-color);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 5px;
+  background: transparent;
+  padding: 7px 11px;
+  font: inherit;
+  font-size: 12px;
+  min-height: 36px;
+  cursor: pointer;
+}
+.flight-exploration .phase-controls button[aria-pressed="true"],
+.flight-exploration .measure-controls button[aria-pressed="true"] {
+  background: var(--bs-body-color);
+  color: var(--bs-body-bg);
+}
+.flight-exploration .phase-controls .clear-selection {
+  margin-left: auto;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding-inline: 0;
+}
+.flight-exploration .clear-selection:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.flight-exploration .selection-label {
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 10px 0 20px;
+  min-height: 18px;
+}
+.flight-exploration .area-section {
+  border-top: 1px solid var(--bs-border-color);
+  padding-top: 16px;
+}
+.flight-exploration .area-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.flight-exploration .area-heading h2 {
+  font:
+    400 27px/1.2 Georgia,
+    serif;
+  letter-spacing: -0.025em;
+  margin: 0;
+}
+.flight-exploration .measure-controls {
+  display: flex;
+  gap: 5px;
+}
+.flight-exploration .cause-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  margin-top: 10px;
+}
+.flight-exploration .cause-legend button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--bs-body-color);
+  font: inherit;
+  font-size: 12px;
+  min-height: 30px;
+  cursor: pointer;
+}
+.flight-exploration .swatch {
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+}
+.flight-exploration .cause-legend button[aria-pressed="true"] {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.flight-exploration .area-stage {
+  height: 280px;
+  width: 100%;
+  position: relative;
+  margin-top: 8px;
+}
+.flight-exploration .area-detail {
+  min-height: 21px;
+  font-size: 13px;
+  margin: 4px 0 8px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.flight-exploration .area-caption {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--bs-secondary-color);
+  margin: 0 0 14px;
+}
+.flight-exploration .source-inspector {
+  max-width: none;
+  margin: 0 0 20px;
+}
+.flight-exploration .inspect-record {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--bs-border-color);
+  overflow-wrap: anywhere;
+}
+.flight-exploration .exact-table-wrap {
+  overflow-x: auto;
+  margin-block: 16px;
+}
+.flight-exploration .exact-table {
+  width: 100%;
+  min-width: 570px;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.flight-exploration .exact-table caption {
+  caption-side: top;
+  color: var(--bs-secondary-color);
+  font-size: 11px;
+}
+.flight-exploration .exact-table th,
+.flight-exploration .exact-table td {
+  padding: 7px 10px 7px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--bs-border-color);
+}
+.flight-exploration .exact-value {
+  padding: 4px 0;
+  background: none;
+  border: 0;
+  color: var(--bs-body-color);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.flight-exploration .exact-value[aria-pressed="true"] {
+  font-weight: 700;
+  text-decoration-thickness: 2px;
+}
+@media (max-width: 800px) {
+  .flight-exploration-view .evidence-heading {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .flight-exploration-view .evidence-heading h1 {
+    font-size: 34px;
+  }
+  .flight-exploration .area-heading h2 {
+    font-size: 25px;
+  }
+}
+@media (max-width: 560px) {
+  .flight-exploration .area-stage {
+    height: 300px;
+  }
+  .flight-exploration .phase-controls .clear-selection {
+    margin-left: 0;
+  }
+  .flight-exploration .phase-controls button,
+  .flight-exploration .measure-controls button,
+  .flight-exploration .cause-legend button {
+    min-height: 44px;
+  }
+  .flight-exploration .area-heading {
+    gap: 12px;
+  }
+  .flight-exploration .cause-legend {
+    gap: 4px 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .flight-exploration * {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.flight-exploration .selection-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 10px 0 20px;
+}
+.flight-exploration .selection-row .selection-label {
+  margin: 0;
+}
+.flight-exploration .jump-to-causes {
+  font: inherit;
+  font-size: 12px;
+  padding: 5px 0;
+  color: var(--bs-body-color);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.flight-exploration .area-reading {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--bs-secondary-color);
+  margin: 8px 0 0;
+}
+@media (max-width: 560px) {
+  .flight-exploration .selection-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .flight-exploration .jump-to-causes {
+    min-height: 44px;
+  }
+}

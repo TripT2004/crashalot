@@ -1,0 +1,73 @@
+{
+  "version": "1.4.0",
+  "filter": {
+    "flight_type": "Scheduled Revenue Flight"
+  },
+  "phase": {
+    "Takeoff (climb)": "departure",
+    "Take off": "departure",
+    "Initial climb": "departure",
+    "Flight": "in_flight",
+    "En route": "in_flight",
+    "Landing (descent or approach)": "arrival",
+    "Landing": "arrival",
+    "Approach": "arrival",
+    "Taxiing": "ground",
+    "Taxi": "ground",
+    "Parking": "ground",
+    "Standing": "ground",
+    "Pushback / towing": "ground",
+    "Manoeuvring": "unordered",
+    "Manoeuvring (airshow, firefighting, ag.ops.)": "unordered",
+    "": "unknown"
+  },
+  "cause": {
+    "Technical failure": "technical",
+    "Human factor": "human",
+    "Weather": "weather",
+    "Other causes": "other",
+    "Terrorism act, Hijacking, Sabotage": "intentional",
+    "": "unknown"
+  },
+  "cause_labels": {
+    "technical": "Technical failure",
+    "human": "Human factor",
+    "weather": "Weather",
+    "other": "Other causes",
+    "intentional": "Intentional acts",
+    "unknown": "Not recorded"
+  },
+  "domain_status": "Engine, systems, structure, maintenance are not source fields. No narrative inference is performed.",
+  "denominator": "All phase-selected records within each displayed calendar bin, including records without recorded cause. No exposure denominator.",
+  "periods": {
+    "start_inclusive": 1970,
+    "end_exclusive": 2025,
+    "width_years": 5,
+    "count": 11,
+    "value": "raw archive record count",
+    "spacing": "five-year calendar periods; uniformly spaced",
+    "exclude_2025": "User confirmed 2025 is the right endpoint, not an included data year."
+  },
+  "area_display": {
+    "causes": [
+      "weather",
+      "technical",
+      "human",
+      "intentional"
+    ],
+    "labels": {
+      "weather": "Weather",
+      "technical": "Technical",
+      "human": "Human Factor",
+      "intentional": "Intentional Acts"
+    },
+    "excluded": [
+      "other",
+      "unknown"
+    ],
+    "percentage_denominator": "phase-selected records in the four displayed causes, within each five-year period",
+    "sankey_scope": "All source causes retained; no canonical records removed.",
+    "default_measure": "count",
+    "alignment": "bottom"
+  }
+}
