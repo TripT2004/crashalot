@@ -40,3 +40,7 @@ Does the photograph leave enough room to absorb the outcome? Does the question i
 ## Navigation revision
 
 The cover, story fragments, chart beats, and placeholders now share one neutral footer with Back/Next and arrow-key navigation. The footer identifies the current slide and reveal. Separate blue calls to action have been removed. Next settles a running chart reveal; Back retraces count beats, and returning from the following slide restores the completed comparison. Pause and Replay remain secondary controls under the graph.
+
+## Reading-time adjustment — November 6, 2026
+
+At the user's request, Auto holds now total 21.1 seconds instead of 15 seconds. The map/date/airline/flight/departure/suspense/photo/outcome/question holds are 1,000 / 1,400 / 900 / 1,200 / 2,300 / 1,800 / 3,500 / 4,400 / 4,600 ms. Longer sentence, photograph and reflection beats receive the largest increases. Whole-phrase fade timing and explicit slide navigation are unchanged.

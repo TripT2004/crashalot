@@ -132,6 +132,8 @@ test('opening Auto reveals only fragments, and Back holds the reader’s chosen 
   await next(page).click();
   const hook = page.locator('#flight-1282');
   await page.clock.runFor(16000);
+  await expect(hook).toHaveAttribute('data-hook-step', '7');
+  await page.clock.runFor(6000);
   await expect(hook).toHaveAttribute('data-hook-step', '9');
   await page.clock.fastForward(60000);
   await expect(page).toHaveURL(/flight-1282(?:\/\d+)?$/);
@@ -185,7 +187,7 @@ test('cover controls work before starting and keep their geometry across all fou
   await page.clock.runFor(16000);
   await expect(page.locator('#flight-1282')).toHaveAttribute('data-hook-step', '0');
   await auto.click();
-  await page.clock.runFor(16000);
+  await page.clock.runFor(23000);
   await expect(page.locator('#flight-1282')).toHaveAttribute('data-hook-step', '9');
   await expect(page.locator('#flight-1282')).toHaveClass(/present/);
 });

@@ -186,7 +186,7 @@ const hook = document.getElementById('flight-1282');
 // Whole phrases fade in together. Keep a dedicated suspense hold before
 // the panel/photo at Beat 5, then time the longer outcome and question for reading.
 const hookBeatLabels = ['0','1','2','2.5','3','4','5','6','7','8'];
-const hookHolds = [700, 950, 650, 900, 1500, 1300, 2400, 3300, 3300];
+const hookHolds = [1000, 1400, 900, 1200, 2300, 1800, 3500, 4400, 4600];
 let completingHook = false;
 const hookPlayback = createBeatPlayback({
   state: () => ({ running:false, complete:Number(hook.dataset.hookStep || 0) >= hookBeatLabels.length-1, atBoundary:true }),
