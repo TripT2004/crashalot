@@ -92,3 +92,13 @@ Latest user direction supersedes the six-beat treatment: three beats (rise/peak,
 User-approved prototype transferred to the `flight-phase` chapter, almost unchanged in chart structure. Current confirmed scope: exact Scheduled Revenue Flight label, 1970–2024, eleven complete five-year bins; 2025 is the right boundary. The sequential Sankey partitions accident records by phase (with ground/missing separate), rather than measuring successful flights. Nivo AreaBump shows Weather, Technical, Human Factor, Intentional Acts; Others and Not Recorded are retained in source/Sankey and disclosed below the cause chart. Count/Percentage toggles use the same selected identities and an explicit four-cause denominator.
 
 One optional explore beat; no autoplay selection or new click gate. Added keyboard equivalents, exact-value table, focus-aware cause jump, and reduced-motion lifecycle. Source JSON is generated from the retained Parquet with ID/checksum/partition checks. Reviewed against existing narration and style; motion/interaction expert gave a PASS after code and desktop/mobile screenshots. See [source contract](flight-exploration-source.md) and [review](flight-exploration-motion-review.md). The prior operation→phase taxonomy component remains only for historical/component-study use.
+
+
+## Opening-page polish · November 5, 2026
+
+Back on `main` at the user's request. The opener now retains the shared footer divider, height, progress rail, and Next button. The invitation tagline is removed; its space introduces arrow-key navigation and scrolling on desktop, or tapping Next on phones. The arrow keys lift subtly three times and then rest. Reduced motion suppresses both this cue and the cloud drift; scenery pauses away from the cover.
+
+The earlier cyan oval is replaced with an inline SVG aircraft window: ivory cabin trim, a recessed gasket and bevel, shade handle, blue sky, layered clouds, and a wing. No remote asset or new runtime dependency is required. This is a reviewable visual pass, not a change to the narrative or data.
+
+
+Navigation correction: the user rejected the filled square Next treatment and the changing “Finish animation” label. Next now uses the lighter outlined style, a constant label and a fixed 104 × 44 px footprint across pages and chart states. Pressing it during an active reveal still settles that reveal; the navigation no longer changes its visible name or geometry to expose that playback state.

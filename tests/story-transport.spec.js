@@ -1,5 +1,11 @@
 import { test, expect } from '@playwright/test';
 const next = page => page.locator('[data-story-next]');
+async function expectStableNext(page, initial) {
+  await expect(next(page)).toHaveAccessibleName('Next');
+  await expect(next(page)).toHaveText(/^Next\s*→$/);
+  const current = await next(page).boundingBox();
+  for (const key of ['x', 'y', 'width', 'height']) expect(current[key]).toBe(initial[key]);
+}
 async function scale(page) {
   await page.goto('/#/change-over-time');
   await expect(page.locator('.scale-comparison')).toBeVisible();
@@ -7,17 +13,19 @@ async function scale(page) {
 }
 const scaleValues = page => page.locator('.scale-comparison__value').evaluateAll(nodes => nodes.map(n => Number(n.dataset.value)));
 
-test('Finish settles each scale beat; paused beats finish; all routes preserve state; Replay resets', async ({ page, request }) => {
+test('Next stays fixed while settling running and paused scale beats; routes preserve state; Replay resets', async ({ page, request }) => {
   await scale(page);
+  const nextBounds = await next(page).boundingBox();
   const rows = (await (await request.get('/data/scheduled-service.json')).json()).rows;
   await next(page).click();
-  await expect(next(page)).toHaveText(/Finish animation/);
+  await expectStableNext(page, nextBounds);
   await page.locator('.scale-comparison__transport button', { hasText: 'Pause' }).click();
-  await expect(next(page)).toHaveText(/Finish animation/);
+  await expectStableNext(page, nextBounds);
   await next(page).click();
   expect(await scaleValues(page)).toEqual([rows[0].fatalAccidents, 0]);
+  await expectStableNext(page, nextBounds);
   await next(page).click();
-  await expect(next(page)).toHaveText(/Finish animation/);
+  await expectStableNext(page, nextBounds);
   await next(page).click();
   expect(await scaleValues(page)).toEqual([rows[0].fatalAccidents, rows[0].departures]);
   await next(page).click();
@@ -55,16 +63,17 @@ test('reading keys scroll the exploration without advancing; explicit footer sti
   await expect(page).toHaveURL(/arrival$/);
 });
 
-test('Auto is scoped to chart reveals and Finish stops at a reader-controlled endpoint', async ({ page }) => {
+test('Auto is scoped to chart reveals and Next settles at a reader-controlled endpoint', async ({ page }) => {
   await scale(page);
   await expect(page.locator('#playback-toggle')).toBeHidden();
   await page.goto('/#/counts-in-context');
   await expect(page.locator('#playback-toggle')).toBeVisible();
   await expect(page.locator('#playback-toggle')).toHaveAccessibleName('Auto chart reveals');
+  const nextBounds = await next(page).boundingBox();
   await page.locator('#playback-toggle').click();
-  await expect(next(page)).toHaveText(/Finish animation/);
+  await expectStableNext(page, nextBounds);
   await next(page).click();
-  await expect(next(page)).toHaveText(/^Next/);
+  await expectStableNext(page, nextBounds);
   await page.waitForTimeout(2200);
   await expect(page.locator('[data-story-position]')).toHaveText('4 of 8 · Reveal 1 of 3');
   for (let i = 0; i < 2; i++) { await next(page).click(); await next(page).click(); }

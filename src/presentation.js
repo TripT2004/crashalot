@@ -111,16 +111,13 @@ function updateNavigation() {
   const hookStep = Number(document.getElementById('flight-1282').dataset.hookStep || 0);
   const slidePosition = `${presentation.getIndices().h + 1} of ${presentation.getTotalSlides()}`;
   let position = `${slidePosition} · ${slide.dataset.beat || 'The journey'}`;
-  if (cover) position = 'An invitation to look closer';
+  if (cover) position = `${slidePosition} · Welcome`;
   if (slide.id === 'flight-1282') position = `${slidePosition} · Reveal ${hookStep + 1} of 5`;
   if (['change-over-time', 'counts-in-context'].includes(slide.id)) position = state ? `${slidePosition} · Reveal ${state.step} of ${state.total}` : `${slidePosition} · Loading…`;
   if (storyPosition.textContent !== position) storyPosition.textContent = position;
   storyBack.hidden = cover;
-  const finishing = state?.running || state?.inProgress;
   playbackToggle.hidden = !chart?.setPlaybackMode;
-  storyNext.querySelector('[data-next-label]').textContent = cover ? 'Start the journey' : finishing ? 'Finish animation' : 'Next';
   storyNext.disabled = presentation.isLastSlide() || (['change-over-time', 'counts-in-context'].includes(slide.id) && !chart);
-  storyNext.setAttribute('aria-label', cover ? 'Start the journey' : finishing ? 'Finish animation' : state ? `Next: ${state.action.toLowerCase()}` : 'Next');
 }
 function previousBeat() {
   const chart = chartInstances.find(chart => chart.slide === presentation.getCurrentSlide());
