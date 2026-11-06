@@ -153,7 +153,7 @@ export async function mountScaleComparison(container) {
   function layout() {
     if (destroyed) return;
     const width = Math.max(260, plot.node().clientWidth);
-    const height = width < 600 ? 230 : window.innerHeight < 900 ? 240 : 300;
+    const height = width < 600 ? 220 : window.innerHeight < 900 ? 240 : 300;
     const barHeight = height < 300 ? 30 : 42;
     geometry = { width, height, left: 10, right: width - 28, barY: height < 300 ? 50 : 65, barHeight };
     calloutKey = '';

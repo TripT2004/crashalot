@@ -59,7 +59,7 @@
 .scale-comparison__source p { max-width:100ch; line-height:1.6; }
 @media(max-width:600px) {
   .scale-comparison__commentary { min-height:150px; align-items:start; margin-top:12px; }
-  .scale-comparison__analogy { grid-template-columns:1fr; gap:16px; }
+  .scale-comparison__analogy { grid-template-columns:1fr; gap:12px; }
   .scale-comparison__one-year,.scale-comparison__add-more { font-size:16px; }
   .scale-comparison__tiny { margin-top:12px; }
   .scale-comparison__question { font-size:31px; max-width:19ch; }
