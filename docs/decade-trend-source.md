@@ -61,3 +61,9 @@ Transformation checks: production build and diff whitespace check pass. Browser 
 Auto is the default. The decade sequence uses 1,050 ms per reveal unit, easing each mark separately, with 280 ms after the rise/peak beat and 450 ms after the decline beat. It stops at the final line chart and requires explicit Next to change slides. Manual pauses the current reveal and cancels any pending advance. Pause/Resume, Back and Replay retain direct reader control. Leaving the slide or hiding the tab suspends work, preserving state. Reduced-motion Auto shows the final static chart immediately.
 
 Playback verification covers natural completion, short boundary holds, stable navigation geometry, manual override, pause/resume, Back/Replay, tab visibility, slide departure, reduced motion, and the prohibition on automatic slide changes.
+
+## Fatal-crash overlay — November 6, 2026
+
+The yellow series counts retained records with `total_fatalities > 0`, using exactly the same worldwide Scheduled Revenue Flight category, 1950–2024 interval, source checksum and unique IDs as the total series. An ad hoc Polars aggregation reconciled all annual and decade totals before adding `fatalCount` to both JSON row sets. All 4,328 IDs are unique; no selected record has a missing or negative `total_fatalities` value. This is source-field completeness, not independent verification of every underlying accident report.
+
+Fatal counts by bin: 402, 415, 475, 340, 304, 152, 98, 22. They sum to 2,208. Fatal crashes declined 79.37% from the 1970s to the 2010s (1 − 98/475). They are 36.43% of recorded crashes in the 2010s and 50% of records in the five-year 2020–2024 bin. Consequently the proposed “fatal ones are minuscule” copy is replaced by “Fatal crashes fell even further.” The two lines retain the same zero-based count scale and the partial-decade treatment.

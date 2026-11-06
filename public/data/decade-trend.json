@@ -1,6 +1,6 @@
 {
   "source": {
-    "name": "MauroPello \u00b7 PlaneCrashData",
+    "name": "MauroPello · PlaneCrashData",
     "url": "https://huggingface.co/datasets/MauroPello/planecrashdata",
     "revision": "b817a96f2b9152b735c9c6570d465102f5f76c88",
     "sha256": "db334ffbab0cf67b06765038803338531fbfe23522c69b453cd8eb63a6c09b48",
@@ -11,9 +11,10 @@
     "limitations": [
       "An archive count, not a complete census or a per-flight risk estimate.",
       "Historical reporting and category completeness may vary.",
-      "2020\u20132024 contains five years; 2025 excluded because scheduled-flight coverage stops in July.",
+      "2020–2024 contains five years; 2025 excluded because scheduled-flight coverage stops in July.",
       "Earlier chart uses U.S. scheduled service; this chart changes to a worldwide archive."
-    ]
+    ],
+    "fatalMeasure": "Records with total_fatalities > 0; same source IDs, category and years as total counts"
   },
   "rows": [
     {
@@ -23,7 +24,8 @@
       "end": 1959,
       "years": 10,
       "partial": false,
-      "count": 688
+      "count": 688,
+      "fatalCount": 402
     },
     {
       "decade": 1960,
@@ -32,7 +34,8 @@
       "end": 1969,
       "years": 10,
       "partial": false,
-      "count": 704
+      "count": 704,
+      "fatalCount": 415
     },
     {
       "decade": 1970,
@@ -41,7 +44,8 @@
       "end": 1979,
       "years": 10,
       "partial": false,
-      "count": 923
+      "count": 923,
+      "fatalCount": 475
     },
     {
       "decade": 1980,
@@ -50,7 +54,8 @@
       "end": 1989,
       "years": 10,
       "partial": false,
-      "count": 711
+      "count": 711,
+      "fatalCount": 340
     },
     {
       "decade": 1990,
@@ -59,7 +64,8 @@
       "end": 1999,
       "years": 10,
       "partial": false,
-      "count": 624
+      "count": 624,
+      "fatalCount": 304
     },
     {
       "decade": 2000,
@@ -68,7 +74,8 @@
       "end": 2009,
       "years": 10,
       "partial": false,
-      "count": 365
+      "count": 365,
+      "fatalCount": 152
     },
     {
       "decade": 2010,
@@ -77,318 +84,401 @@
       "end": 2019,
       "years": 10,
       "partial": false,
-      "count": 269
+      "count": 269,
+      "fatalCount": 98
     },
     {
       "decade": 2020,
-      "label": "2020\u201324",
+      "label": "2020–24",
       "start": 2020,
       "end": 2024,
       "years": 5,
       "partial": true,
-      "count": 44
+      "count": 44,
+      "fatalCount": 22
     }
   ],
   "annual": [
     {
       "year": 1950,
-      "count": 82
+      "count": 82,
+      "fatalCount": 45
     },
     {
       "year": 1951,
-      "count": 86
+      "count": 86,
+      "fatalCount": 49
     },
     {
       "year": 1952,
-      "count": 62
+      "count": 62,
+      "fatalCount": 34
     },
     {
       "year": 1953,
-      "count": 73
+      "count": 73,
+      "fatalCount": 46
     },
     {
       "year": 1954,
-      "count": 65
+      "count": 65,
+      "fatalCount": 35
     },
     {
       "year": 1955,
-      "count": 61
+      "count": 61,
+      "fatalCount": 36
     },
     {
       "year": 1956,
-      "count": 61
+      "count": 61,
+      "fatalCount": 36
     },
     {
       "year": 1957,
-      "count": 59
+      "count": 59,
+      "fatalCount": 35
     },
     {
       "year": 1958,
-      "count": 76
+      "count": 76,
+      "fatalCount": 47
     },
     {
       "year": 1959,
-      "count": 63
+      "count": 63,
+      "fatalCount": 39
     },
     {
       "year": 1960,
-      "count": 71
+      "count": 71,
+      "fatalCount": 44
     },
     {
       "year": 1961,
-      "count": 68
+      "count": 68,
+      "fatalCount": 38
     },
     {
       "year": 1962,
-      "count": 71
+      "count": 71,
+      "fatalCount": 45
     },
     {
       "year": 1963,
-      "count": 65
+      "count": 65,
+      "fatalCount": 38
     },
     {
       "year": 1964,
-      "count": 56
+      "count": 56,
+      "fatalCount": 33
     },
     {
       "year": 1965,
-      "count": 71
+      "count": 71,
+      "fatalCount": 36
     },
     {
       "year": 1966,
-      "count": 59
+      "count": 59,
+      "fatalCount": 37
     },
     {
       "year": 1967,
-      "count": 71
+      "count": 71,
+      "fatalCount": 42
     },
     {
       "year": 1968,
-      "count": 76
+      "count": 76,
+      "fatalCount": 48
     },
     {
       "year": 1969,
-      "count": 96
+      "count": 96,
+      "fatalCount": 54
     },
     {
       "year": 1970,
-      "count": 94
+      "count": 94,
+      "fatalCount": 45
     },
     {
       "year": 1971,
-      "count": 80
+      "count": 80,
+      "fatalCount": 44
     },
     {
       "year": 1972,
-      "count": 99
+      "count": 99,
+      "fatalCount": 56
     },
     {
       "year": 1973,
-      "count": 119
+      "count": 119,
+      "fatalCount": 60
     },
     {
       "year": 1974,
-      "count": 78
+      "count": 78,
+      "fatalCount": 47
     },
     {
       "year": 1975,
-      "count": 98
+      "count": 98,
+      "fatalCount": 41
     },
     {
       "year": 1976,
-      "count": 88
+      "count": 88,
+      "fatalCount": 48
     },
     {
       "year": 1977,
-      "count": 86
+      "count": 86,
+      "fatalCount": 40
     },
     {
       "year": 1978,
-      "count": 93
+      "count": 93,
+      "fatalCount": 47
     },
     {
       "year": 1979,
-      "count": 88
+      "count": 88,
+      "fatalCount": 47
     },
     {
       "year": 1980,
-      "count": 84
+      "count": 84,
+      "fatalCount": 38
     },
     {
       "year": 1981,
-      "count": 64
+      "count": 64,
+      "fatalCount": 35
     },
     {
       "year": 1982,
-      "count": 67
+      "count": 67,
+      "fatalCount": 32
     },
     {
       "year": 1983,
-      "count": 73
+      "count": 73,
+      "fatalCount": 33
     },
     {
       "year": 1984,
-      "count": 50
+      "count": 50,
+      "fatalCount": 25
     },
     {
       "year": 1985,
-      "count": 64
+      "count": 64,
+      "fatalCount": 37
     },
     {
       "year": 1986,
-      "count": 56
+      "count": 56,
+      "fatalCount": 31
     },
     {
       "year": 1987,
-      "count": 78
+      "count": 78,
+      "fatalCount": 36
     },
     {
       "year": 1988,
-      "count": 78
+      "count": 78,
+      "fatalCount": 33
     },
     {
       "year": 1989,
-      "count": 97
+      "count": 97,
+      "fatalCount": 40
     },
     {
       "year": 1990,
-      "count": 62
+      "count": 62,
+      "fatalCount": 32
     },
     {
       "year": 1991,
-      "count": 60
+      "count": 60,
+      "fatalCount": 33
     },
     {
       "year": 1992,
-      "count": 65
+      "count": 65,
+      "fatalCount": 29
     },
     {
       "year": 1993,
-      "count": 85
+      "count": 85,
+      "fatalCount": 34
     },
     {
       "year": 1994,
-      "count": 60
+      "count": 60,
+      "fatalCount": 38
     },
     {
       "year": 1995,
-      "count": 74
+      "count": 74,
+      "fatalCount": 35
     },
     {
       "year": 1996,
-      "count": 63
+      "count": 63,
+      "fatalCount": 29
     },
     {
       "year": 1997,
-      "count": 61
+      "count": 61,
+      "fatalCount": 28
     },
     {
       "year": 1998,
-      "count": 57
+      "count": 57,
+      "fatalCount": 23
     },
     {
       "year": 1999,
-      "count": 37
+      "count": 37,
+      "fatalCount": 23
     },
     {
       "year": 2000,
-      "count": 43
+      "count": 43,
+      "fatalCount": 21
     },
     {
       "year": 2001,
-      "count": 41
+      "count": 41,
+      "fatalCount": 22
     },
     {
       "year": 2002,
-      "count": 37
+      "count": 37,
+      "fatalCount": 18
     },
     {
       "year": 2003,
-      "count": 33
+      "count": 33,
+      "fatalCount": 13
     },
     {
       "year": 2004,
-      "count": 26
+      "count": 26,
+      "fatalCount": 11
     },
     {
       "year": 2005,
-      "count": 40
+      "count": 40,
+      "fatalCount": 15
     },
     {
       "year": 2006,
-      "count": 26
+      "count": 26,
+      "fatalCount": 12
     },
     {
       "year": 2007,
-      "count": 42
+      "count": 42,
+      "fatalCount": 15
     },
     {
       "year": 2008,
-      "count": 41
+      "count": 41,
+      "fatalCount": 13
     },
     {
       "year": 2009,
-      "count": 36
+      "count": 36,
+      "fatalCount": 12
     },
     {
       "year": 2010,
-      "count": 38
+      "count": 38,
+      "fatalCount": 17
     },
     {
       "year": 2011,
-      "count": 46
+      "count": 46,
+      "fatalCount": 20
     },
     {
       "year": 2012,
-      "count": 24
+      "count": 24,
+      "fatalCount": 10
     },
     {
       "year": 2013,
-      "count": 28
+      "count": 28,
+      "fatalCount": 7
     },
     {
       "year": 2014,
-      "count": 29
+      "count": 29,
+      "fatalCount": 8
     },
     {
       "year": 2015,
-      "count": 31
+      "count": 31,
+      "fatalCount": 5
     },
     {
       "year": 2016,
-      "count": 22
+      "count": 22,
+      "fatalCount": 8
     },
     {
       "year": 2017,
-      "count": 10
+      "count": 10,
+      "fatalCount": 3
     },
     {
       "year": 2018,
-      "count": 16
+      "count": 16,
+      "fatalCount": 9
     },
     {
       "year": 2019,
-      "count": 25
+      "count": 25,
+      "fatalCount": 11
     },
     {
       "year": 2020,
-      "count": 6
+      "count": 6,
+      "fatalCount": 3
     },
     {
       "year": 2021,
-      "count": 9
+      "count": 9,
+      "fatalCount": 5
     },
     {
       "year": 2022,
-      "count": 12
+      "count": 12,
+      "fatalCount": 6
     },
     {
       "year": 2023,
-      "count": 6
+      "count": 6,
+      "fatalCount": 3
     },
     {
       "year": 2024,
-      "count": 11
+      "count": 11,
+      "fatalCount": 5
     }
-  ]
+  ],
+  "audit": {
+    "records": 4328,
+    "uniqueSourceIds": 4328,
+    "missingTotalFatalities": 0,
+    "fatalRecords": 2208
+  }
 }
