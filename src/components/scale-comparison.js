@@ -89,7 +89,7 @@ export async function mountScaleComparison(container) {
   const tiny = storyCopy.append('p').attr('class','scale-comparison__tiny').text('Fatal accidents are a tiny fraction of departures.');
   const analogy = commentary.append('div').attr('class','scale-comparison__analogy');
   const analogyCopy = analogy.append('div');
-  analogyCopy.append('h2').text('Think of 24 heads in a row.');
+  analogyCopy.append('h2').text('That’s less likely than getting 24 heads in a row…');
   const analogyDetail = analogyCopy.append('p').attr('aria-live','off');
   const coins = analogy.append('div').attr('class','scale-comparison__coins').attr('role','img').attr('aria-live','off').attr('aria-label','24 consecutive heads with a fair coin');
   const coin = coins.selectAll('.scale-comparison__coin').data(Array.from({length:24},(_,i)=>i)).join('span')
@@ -229,7 +229,7 @@ export async function mountScaleComparison(container) {
       question.classed('is-visible',stage === 8).attr('aria-hidden',String(stage !== 8));
     }
     const departuresPerAccident = values.fatalAccidents > 0 ? values.departures/values.fatalAccidents : null;
-    if (stage === 7) analogyDetail.text(`24 fair-coin tosses, all heads: 1 in 16.8 million. This record: 1 fatal accident per ${(departuresPerAccident/1e6).toFixed(1)} million departures.`);
+    if (stage === 7) analogyDetail.text(`24 fair-coin tosses, all heads: 1 in 16.8 million. Across 2005–2024: 1 fatal accident per ${(totals.departures/totals.fatalAccidents/1e6).toFixed(1)} million departures.`);
     const coinProgress = i => clamp((coinElapsed - COIN_DELAY_MS - i * COIN_STAGGER_MS) / COIN_FLIP_MS);
     const heads = Math.max(0,Math.min(24,Math.floor((coinElapsed-COIN_DELAY_MS-COIN_FLIP_MS)/COIN_STAGGER_MS)+1));
     coin.attr('data-face',i=>coinProgress(i) === 1 ? 'heads' : coinProgress(i) > 0 ? 'flipping' : 'pending');
