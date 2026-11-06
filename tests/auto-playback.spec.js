@@ -122,15 +122,15 @@ test('opening Auto reveals only fragments, and Back holds the reader’s chosen 
   await expect(page.locator('#welcome')).toHaveClass(/present/);
   await next(page).click();
   const hook = page.locator('#flight-1282');
-  await page.clock.runFor(6000);
-  await expect(hook).toHaveAttribute('data-hook-step', '4');
+  await page.clock.runFor(16000);
+  await expect(hook).toHaveAttribute('data-hook-step', '9');
   await page.clock.fastForward(60000);
   await expect(page).toHaveURL(/flight-1282(?:\/\d+)?$/);
   await page.locator('[data-story-back]').click();
   await page.clock.runFor(10000);
-  await expect(hook).toHaveAttribute('data-hook-step', '3');
+  await expect(hook).toHaveAttribute('data-hook-step', '8');
   await next(page).click();
-  await expect(hook).toHaveAttribute('data-hook-step', '4');
+  await expect(hook).toHaveAttribute('data-hook-step', '9');
   await next(page).click();
   // Reveal debounces fragment URLs; the active slide is the navigation outcome.
   await expect(page.locator('#change-over-time')).toHaveClass(/present/);
@@ -145,7 +145,7 @@ test('reduced motion shows a complete static view and never changes slides', asy
   await expect(page.locator('.scale-comparison')).toHaveAttribute('data-playback', 'complete');
   await expect(page).toHaveURL(/change-over-time$/);
   await page.goto('/#/flight-1282');
-  await expect(page.locator('#flight-1282')).toHaveAttribute('data-hook-step', '4');
+  await expect(page.locator('#flight-1282')).toHaveAttribute('data-hook-step', '9');
   await expect(page).toHaveURL(/flight-1282(?:\/\d+)?$/);
 });
 
@@ -168,10 +168,10 @@ test('cover controls work before starting and keep their geometry across all fou
   expect(await page.locator('.utility-icon').evaluateAll(nodes => nodes.map(el => el.outerHTML))).toEqual(icons);
   expect(await page.locator('.presentation-utilities').boundingBox()).toEqual(bounds);
   await next(page).click();
-  await page.clock.runFor(6000);
+  await page.clock.runFor(16000);
   await expect(page.locator('#flight-1282')).toHaveAttribute('data-hook-step', '0');
   await auto.click();
-  await page.clock.runFor(6000);
-  await expect(page.locator('#flight-1282')).toHaveAttribute('data-hook-step', '4');
+  await page.clock.runFor(16000);
+  await expect(page.locator('#flight-1282')).toHaveAttribute('data-hook-step', '9');
   await expect(page.locator('#flight-1282')).toHaveClass(/present/);
 });

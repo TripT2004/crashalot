@@ -114,10 +114,11 @@ function updateNavigation() {
   const slidePosition = `${presentation.getIndices().h + 1} of ${presentation.getTotalSlides()}`;
   let position = `${slidePosition} · ${slide.dataset.beat || 'The journey'}`;
   if (cover) position = `${slidePosition} · Welcome`;
-  if (slide.id === 'flight-1282') position = `${slidePosition} · Reveal ${hookStep + 1} of 5`;
+  if (slide.id === 'flight-1282') position = `${slidePosition} · Reveal ${hookStep + 1} of ${hookBeatLabels.length}`;
   if (['change-over-time', 'counts-in-context', 'flight-phase'].includes(slide.id)) position = state ? `${slidePosition} · Reveal ${state.step} of ${state.total}` : `${slidePosition} · Loading…`;
   if (storyPosition.textContent !== position) storyPosition.textContent = position;
-  storyBack.hidden = cover;
+  storyBack.hidden = false;
+  storyBack.disabled = cover;
   playbackToggle.hidden = false;
   storyNext.disabled = presentation.isLastSlide() || (['change-over-time', 'counts-in-context', 'flight-phase'].includes(slide.id) && !chart);
 }
@@ -159,19 +160,23 @@ function updateChrome() {
   updateNavigation();
 }
 const hook = document.getElementById('flight-1282');
-// Reading holds follow the material: sentence, photograph, safe landing, question.
-const hookHolds = [900, 1400, 800, 2600];
+// Whole phrases fade in together. Keep a dedicated suspense hold before
+// the panel/photo at Beat 5, then time the longer outcome and question for reading.
+const hookBeatLabels = ['0','1','2','2.5','3','4','5','6','7','8'];
+const hookHolds = [700, 950, 650, 900, 1500, 1300, 2400, 3300, 3300];
 let completingHook = false;
 const hookPlayback = createBeatPlayback({
-  state: () => ({ running:false, complete:Number(hook.dataset.hookStep || 0) >= 4, atBoundary:true }),
+  state: () => ({ running:false, complete:Number(hook.dataset.hookStep || 0) >= hookBeatLabels.length-1, atBoundary:true }),
   play() {}, pause() {},
   advance() { if (presentation.getCurrentSlide() === hook) presentation.nextFragment(); },
   holdMs: () => hookHolds[Number(hook.dataset.hookStep || 0)],
   reduced: reducedMotion,
   showAll() {
     completingHook = true;
+    hook.dataset.hookStatic = 'true';
     while (presentation.getCurrentSlide() === hook && presentation.nextFragment()) { /* Fragments only; never next slide. */ }
     completingHook = false;
+    updateHook();
   },
   changed() { hook.dataset.playback = hookPlayback.status; },
 });
@@ -180,7 +185,13 @@ function updateHook() {
   const shown = [...hook.querySelectorAll('.fragment.visible')];
   const step = shown.length ? Math.max(...shown.map(node => Number(node.dataset.fragmentIndex))) + 1 : 0;
   hook.dataset.hookStep = step;
-  hook.querySelector('.hook-event').setAttribute('aria-hidden', String(step === 4));
+  hook.dataset.hookBeat = hookBeatLabels[step];
+  if (step < hookBeatLabels.length-1 && !completingHook) delete hook.dataset.hookStatic;
+  const staticStory = hook.dataset.hookStatic === 'true';
+  const finalBeat = step === hookBeatLabels.length-1;
+  hook.querySelector('.hook-scene').setAttribute('aria-hidden', String(finalBeat && !staticStory));
+  hook.querySelector('.hook-scene').inert = finalBeat && !staticStory;
+  hook.querySelector('.hook-map').setAttribute('aria-hidden',String(step >= 6));
   if (!completingHook) hookPlayback.settled();
   updateNavigation();
 }

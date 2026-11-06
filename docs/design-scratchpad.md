@@ -128,3 +128,17 @@ The Sankey and cause chart accumulate the same original-ID subset at every commi
 ## Directional phase reveal — November 6
 
 Checkpoint `ec22701` preserves the cumulative width-fill version. The revised Sankey keeps the final layout fixed and draws each phase's bands along their consecutive paths. Earlier phases no longer thicken or move as new ones enter. The front advances left to right on desktop and top to bottom on mobile, while the existing source-ID membership updates continue to drive commentary, totals, and cause cells together. Intermediate stroke length is an animated construction state; final ribbon thickness encodes the complete phase count. Ground/missing-phase records retain their separate completion branch. Tests cover segment order, fixed geometry, hidden future bands, retained completed routes, and Pause alongside the existing identity/playback checks.
+
+
+## Opening revision — November 6
+
+The cover uses the shared footer without enlarged keycaps or displaced hints. The page counter remains visible; Back is disabled on the cover. Eric Shao was removed from the team credit at the user's request.
+
+The Flight 1282 opening now follows the user's sequence: Oregon map / Portland pulse (0), date and location (1), airline (2), flight number (2.5), Portland International Airport departure (3), six-minute clause (4), panel separation and photograph together (4.5), safe return / no fatalities (5), personal question with all earlier copy retained (6), then a scene-wide fade to the data invitation (7). Auto remains slide-local and manual navigation retraces every beat. Reduced-motion Auto keeps the complete story readable instead of hiding it behind the final invitation.
+
+**Pending for slide 3 review:** remove “To see whether that picture holds beyond 2005, let’s add the following years.” The user explicitly deferred this edit until we reach slide 3; do not alter that slide during the opening revision.
+
+
+## Whole-phrase reveal restored — November 6
+
+The user rejected the streaming experiment. Removed the streaming component, cursor, trial renderer links, dependency, and stream-specific navigation. Large headings must fade in together as complete phrases. Retained the requested panel/photo move to Beat 5 and its 1,300 ms suspense hold, with the later labels 6 (safe return), 7 (question), 8 (data invitation). The cover/footer, current team credit, Oregon map, accumulated narrative, and pending slide 3 edit remain as requested.
