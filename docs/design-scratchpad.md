@@ -123,3 +123,8 @@ Cover follow-up: the earlier header-hiding exception also hid the new utility pi
 At the user's request, `flight-phase` now directly follows the decade chart. It builds departure → in-flight → arrival records, with a right-hand leading-cause explanation. The commentary is short and descriptive; source/method details remain inspectable below.
 
 The Sankey and cause chart accumulate the same original-ID subset at every committed reveal update. The commentary describes only the current added phase; selecting a phase explicitly finishes the build and focuses all views on that cohort. Both charts rewind together. Ground/missing-phase records stay in their separate branch. Next remains stable and Auto never changes slides. See the updated [interaction/evidence contract](flight-exploration-source.md) for exact counts, timings, and reveal ordering.
+
+
+## Directional phase reveal — November 6
+
+Checkpoint `ec22701` preserves the cumulative width-fill version. The revised Sankey keeps the final layout fixed and draws each phase's bands along their consecutive paths. Earlier phases no longer thicken or move as new ones enter. The front advances left to right on desktop and top to bottom on mobile, while the existing source-ID membership updates continue to drive commentary, totals, and cause cells together. Intermediate stroke length is an animated construction state; final ribbon thickness encodes the complete phase count. Ground/missing-phase records retain their separate completion branch. Tests cover segment order, fixed geometry, hidden future bands, retained completed routes, and Pause alongside the existing identity/playback checks.

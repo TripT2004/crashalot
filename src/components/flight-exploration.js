@@ -83,7 +83,7 @@ export async function mountFlightExploration(container) {
     percent = d3.format(".1%");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   const svg = d3.select(root.querySelector(".flight-flow"));
-  let graph, unit, vertical, width, overlay, linkPath;
+  let graph, unit, vertical, width, overlay, linkPath, flowBands = [];
   const color = (d) =>
     d.key === "unresolved"
       ? "var(--muted-foreground)"
@@ -205,7 +205,9 @@ export async function mountFlightExploration(container) {
         ? overlay.interrupt().transition().duration(420).ease(d3.easeCubicOut)
         : overlay.interrupt();
     const selectedCount = (d) =>
-      members(d.terminal).reduce((n, r) => n + active.has(r[0]), 0);
+      selected === 'all' && !cell
+        ? groups[d.terminal].length
+        : members(d.terminal).reduce((n, r) => n + active.has(r[0]), 0);
     target
       .attr("stroke-width", (d) => selectedCount(d) * unit)
       .attr("d", (d) => {
@@ -523,7 +525,7 @@ export async function mountFlightExploration(container) {
       ['arrival','crash','arrival',1,true],
     ].map(([source,target,key,rank,outcome]) => {
       const link = { source:nodeMap.get(source), target:nodeMap.get(target), key, rank, outcome,
-        value:members(key).length, recordIds:members(key).map(([id]) => id) };
+        value:groups[key].length };
       link.width = link.value * unit;
       link.source.sourceLinks.push(link); link.target.targetLinks.push(link);
       return link;
@@ -535,31 +537,60 @@ export async function mountFlightExploration(container) {
     });
     graph = { nodes,links };
     sankey().update(graph);
-    root.sankeyData = { recordIds:members('all').map(([id]) => id), links:links.map(l => ({ key:l.key,source:l.source.id,target:l.target.id,recordIds:l.recordIds,value:l.value })) };
+    root.sankeyData = { recordIds:members('all').map(([id]) => id), links:links.map(l => ({ key:l.key,source:l.source.id,target:l.target.id,recordIds:members(l.key).map(([id]) => id),value:members(l.key).length })) };
     svg.attr('viewBox',`0 0 ${width} ${vertical ? 620 : 270}`).attr('height',vertical ? 620 : 270);
     svg.selectAll('desc').data([0]).join('desc').text(`Crashes grouped by recorded phase. ${format(revealedIds.size)} of ${format(records.length)} archive records revealed.`);
     const path = linkPath = vertical ? d3.linkVertical().source(d => [d.y0,d.source.x1]).target(d => [d.y1,d.target.x0]) : sankeyLinkHorizontal();
-    svg.selectAll('path.flow-base').data(links,l => l.source.id+':'+l.target.id).join('path')
-      .attr('class','flow-base').attr('d',path).attr('stroke',color).attr('stroke-width',l => l.width);
+    // Geometry uses the final cohort throughout: progress changes path length,
+    // never thickness or the positions of already-drawn phase bands.
     const bands = links.flatMap(link => {
       let offset = 0;
       return ['arrival','in_flight','departure','unresolved'].flatMap(terminal => {
-        if (!members(link.key).some(r => r[1] === terminal)) return [];
-        const band = { link,terminal,bandOffset:offset }; offset += members(terminal).length; return [band];
+        if (!groups[link.key].some(r => r[1] === terminal)) return [];
+        const shift = (-link.value / 2 + offset + groups[terminal].length / 2) * unit;
+        const band = { link,terminal,bandOffset:offset,
+          path:path({...link,y0:link.y0+shift,y1:link.y1+shift}),
+          startY:link.y0+shift,endY:link.y1+shift };
+        offset += groups[terminal].length;
+        return [band];
       });
     });
-    overlay = svg.selectAll('path.flow-selected').data(bands,d => d.link.source.id+':'+d.link.target.id+':'+d.terminal).join('path')
-      .attr('class','flow-selected').attr('d',d => path(d.link)).attr('stroke',d => color(d.link)).attr('stroke-width',0);
+    const bandKey = d => d.link.source.id+':'+d.link.target.id+':'+d.terminal;
+    const base = svg.selectAll('path.flow-base').data(bands,bandKey).join('path')
+      .attr('class','flow-base').attr('d',d => d.path).attr('stroke',d => color(d.link))
+      .attr('stroke-width',d => groups[d.terminal].length*unit)
+      .attr('pathLength',1).attr('data-terminal',d => d.terminal);
+    base.each(function(d) { d.length = this.getTotalLength(); });
+    // Each phase travels from the source through consecutive links to its sink.
+    // Normalized dashes follow the actual curved path, including the mobile layout.
+    for (const terminal of ['departure','in_flight','arrival','unresolved']) {
+      const route = bands.filter(d => d.terminal === terminal).sort((a,b) => a.link.source.x0-b.link.source.x0);
+      const total = d3.sum(route,d => d.length);
+      let offset = 0;
+      for (const band of route) { band.routeStart=offset; band.routeLength=total; offset+=band.length; }
+    }
+    flowBands = bands;
+    overlay = svg.selectAll('path.flow-selected').data(bands,bandKey).join('path')
+      .attr('class','flow-selected').attr('d',d => d.path).attr('stroke',d => color(d.link))
+      .attr('stroke-width',0).attr('pathLength',1).attr('data-terminal',d => d.terminal);
     svg.selectAll('path.flow-hit').data(links,l => l.source.id+':'+l.target.id).join('path')
       .attr('class','flow-hit cursor-interaction').attr('d',path).attr('stroke-width',l => Math.max(l.width,32))
-      .attr('data-cohort-key',l => l.key).attr('tabindex',l => l.value ? 0 : -1).attr('role','button')
-      .attr('aria-hidden',l => String(!l.value)).attr('aria-pressed',l => String(selected === l.key))
-      .attr('aria-label',l => `${phaseNames[l.key]}: ${format(l.value)} records. Select this cohort.`)
-      .on('click',(_,l) => { if (l.value) choose(l.key); })
-      .on('keydown',(e,l) => { if (l.value && ['Enter',' '].includes(e.key)) { e.preventDefault(); e.stopPropagation(); choose(l.key); } });
-    svg.selectAll('rect.flow-node').data(nodes,n => n.id).join('rect').attr('class','flow-node')
-      .attr('x',n => vertical ? n.y0 : n.x0).attr('y',n => vertical ? n.x0 : n.y0)
-      .attr('width',n => vertical ? n.y1-n.y0 : 7).attr('height',n => vertical ? 7 : n.y1-n.y0);
+      .attr('data-cohort-key',l => l.key).attr('role','button')
+      .attr('aria-pressed',l => String(selected === l.key))
+      .attr('aria-label',l => `${phaseNames[l.key]}: ${format(members(l.key).length)} records. Select this cohort.`)
+      .on('click',(_,l) => { if (members(l.key).length) choose(l.key); })
+      .on('keydown',(e,l) => { if (members(l.key).length && ['Enter',' '].includes(e.key)) { e.preventDefault(); e.stopPropagation(); choose(l.key); } });
+    const nodeBands = new Map();
+    for (const band of bands) {
+      for (const [node,y,distance] of [[band.link.source,band.startY,band.routeStart],[band.link.target,band.endY,band.routeStart+band.length]]) {
+        nodeBands.set(node.id+':'+band.terminal,{node,terminal:band.terminal,y,distance,routeLength:band.routeLength});
+      }
+    }
+    svg.selectAll('rect.flow-node').data([...nodeBands.values()],d => d.node.id+':'+d.terminal).join('rect').attr('class','flow-node')
+      .attr('x',d => vertical ? d.y-groups[d.terminal].length*unit/2 : d.node.x0)
+      .attr('y',d => vertical ? d.node.x0 : d.y-groups[d.terminal].length*unit/2)
+      .attr('width',d => vertical ? groups[d.terminal].length*unit : 7)
+      .attr('height',d => vertical ? 7 : groups[d.terminal].length*unit);
     const labels = [];
     const add = (key,x,y,text,second='',anchor='start') => labels.push({key,x,y,text,second,anchor});
     if (!vertical) {
@@ -585,6 +616,26 @@ export async function mountFlightExploration(container) {
         .attr('x',d.x).attr('dy',(_,i) => i ? 19 : 0).text(t => t);
     });
     update(false);
+    renderFlowProgress();
+  }
+
+  function phaseProgress(terminal) {
+    return terminal === 'unresolved' ? Number(revealProgress >= phases.length) : smooth(revealProgress-phases.indexOf(terminal));
+  }
+  function renderFlowProgress() {
+    for (const band of flowBands) {
+      const progress = phaseProgress(band.terminal);
+      band.progress = progress === 1 ? 1 : clamp((progress*band.routeLength-band.routeStart)/band.length);
+    }
+    svg.selectAll('path.flow-base, path.flow-selected')
+      .attr('stroke-dasharray',d => `${d.progress} 1`)
+      .attr('visibility',d => d.progress > 0 ? 'visible' : 'hidden');
+    // Do not leave invisible future stretches of ribbon as interactive hit targets.
+    svg.selectAll('path.flow-hit')
+      .attr('visibility',link => flowBands.filter(d => d.link===link).every(d => d.progress===1) ? 'visible' : 'hidden')
+      .attr('tabindex',link => flowBands.filter(d => d.link===link).every(d => d.progress===1) ? 0 : -1)
+      .attr('aria-hidden',link => String(!flowBands.filter(d => d.link===link).every(d => d.progress===1)));
+    svg.selectAll('rect.flow-node').attr('visibility',d => phaseProgress(d.terminal)>0 && phaseProgress(d.terminal)*d.routeLength>=d.distance-.01 ? 'visible' : 'hidden');
   }
 
   function renderCommentary() {
@@ -642,6 +693,7 @@ export async function mountFlightExploration(container) {
       .tween('phase-records',() => t => {
         revealProgress = start+(end-start)*t;
         if (d3.now()-lastPaint >= 80 || t === 1) { lastPaint = d3.now(); rebuildMembership(); renderReveal(); }
+        else renderFlowProgress();
       }).on('end',() => { running = false; playback.settled(); });
   }
   function advanceReveal() { if (revealStage >= phases.length-1) return; revealStage++; playReveal(); }

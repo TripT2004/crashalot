@@ -86,3 +86,40 @@ test('natural Auto completion, Pause/Resume, Back and Replay retain linked data'
   await page.clock.runFor(800);
   const replay=await snapshot(page);verifyIdentity(replay,source);expect(replay.reveal.recordIds.length).toBeLessThan(610);
 });
+
+for (const [layout,viewport] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
+  test(`${layout}: phase ribbons draw through consecutive paths at fixed thickness`,async ({page}) => {
+    await page.setViewportSize(viewport);
+    await openFrozen(page);
+    const paths = () => page.locator('path.flow-base').evaluateAll(nodes => nodes.map(n => ({
+      terminal:n.dataset.terminal,path:n.getAttribute('d'),width:n.getAttribute('stroke-width'),
+      progress:Number(n.getAttribute('stroke-dasharray').split(' ')[0]),visibility:n.getAttribute('visibility'),
+    })));
+    await page.clock.runFor(400);
+    const early=await paths(),departure=early.filter(d => d.terminal==='departure');
+    expect(departure[0].progress).toBeGreaterThan(0);
+    expect(departure[0].progress).toBeLessThan(1);
+    expect(departure[1].progress).toBe(0);
+    expect(early.filter(d => d.terminal!=='departure').every(d => d.visibility==='hidden')).toBe(true);
+    await page.clock.runFor(600);
+    const middle=await paths(),route=middle.filter(d => d.terminal==='departure');
+    expect(route[0].progress).toBe(1);
+    expect(route[1].progress).toBeGreaterThan(0);
+    expect(route[1].progress).toBeLessThan(1);
+    expect(middle.map(({terminal,path,width})=>({terminal,path,width}))).toEqual(early.map(({terminal,path,width})=>({terminal,path,width})));
+    // The path's leading point advances on the reading axis, including the
+    // top-to-bottom mobile route; a width-only fill cannot satisfy this.
+    const front=await page.locator('path.flow-base[data-terminal="departure"]').first().evaluate(n => {
+      const length=n.getTotalLength(),p=n.getPointAtLength(length*.25),q=n.getPointAtLength(length*.75);
+      return {dx:q.x-p.x,dy:q.y-p.y};
+    });
+    expect(layout==='desktop' ? front.dx : front.dy).toBeGreaterThan(20);
+    await page.clock.runFor(2200);
+    const later=await paths();
+    expect(later.filter(d=>d.terminal==='departure').every(d=>d.progress===1)).toBe(true);
+    expect(later.map(({terminal,path,width})=>({terminal,path,width}))).toEqual(early.map(({terminal,path,width})=>({terminal,path,width})));
+    expect(later.filter(d=>d.terminal==='arrival').every(d=>d.visibility==='hidden')).toBe(true);
+    await page.locator('[data-flight-pause]').click();
+    const paused=await paths();await page.clock.runFor(3000);expect(await paths()).toEqual(paused);
+  });
+}
