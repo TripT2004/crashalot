@@ -9,7 +9,7 @@ const smooth = value => { const t = clamp(value); return t * t * (3 - 2 * t); };
 const beats = [
   { end: 3, period: '1950s–1970s', title: 'The decline did not start immediately.', text: 'Recorded crashes rise from 688 in the 1950s to a peak of 923 in the 1970s. First, establish the longer view.' },
   { end: 7, period: '1980s–2010s', title: 'Technological innovations made flying even safer.', text: 'Ground-proximity warnings and crew resource management added layers of protection. Recorded crashes fell in every completed decade after the 1970s peak, reaching 269 in the 2010s — 71% fewer.', context: true },
-  { end: 10, period: 'The full view · 1950–2024', title: 'A long decline. An unfinished decade.', text: 'The bars become a line. Its dashed final segment leads to 44 recorded crashes in 2020–2024: five years only, not a comparable ten-year total. Counts alone do not measure risk per flight.' },
+  { end: 10, period: 'The full view · 1950–2024', title: 'Fewer crashes. Where do they happen?', text: 'The 2010s recorded 71% fewer crashes than the 1970s. Another 44 are recorded in the first five years of the 2020s. Where in a flight do crashes happen?' },
 ];
 export async function mountDecadeTrend(container) {
   const response = await fetch(`${import.meta.env.BASE_URL}data/decade-trend.json`);
