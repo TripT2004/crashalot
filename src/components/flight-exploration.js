@@ -50,9 +50,24 @@ export async function mountFlightExploration(container) {
     ),
   };
 
-  const phases = ['departure', 'in_flight', 'arrival'];
+  const phases = ['departure', 'in_flight', 'arrival', 'unresolved'];
   const phaseLabels = { departure:'Departure', in_flight:'In flight', arrival:'Arrival', unresolved:'Ground / unknown' };
-  const motion = { durations:[2100, 2100, 2600], holds:[280, 450] };
+  const beats = [
+    { label:'0', end:0, hold:850 },
+    { label:'1', end:0, hold:2200 },
+    { label:'1.5', phase:'departure', end:1, duration:2100, hold:250 },
+    { label:'2', phase:'departure', causes:true, end:1, hold:2200 },
+    { label:'2.5', phase:'in_flight', end:1, hold:950 },
+    { label:'3', phase:'in_flight', end:2, duration:2100, hold:250 },
+    { label:'3.5', phase:'in_flight', causes:true, end:2, hold:2200 },
+    { label:'4', phase:'arrival', end:2, hold:1050 },
+    { label:'4.5', phase:'arrival', end:3, duration:2600, hold:300 },
+    { label:'5', phase:'arrival', causes:true, end:3, hold:2500 },
+    { label:'5.5', phase:'unresolved', end:4, duration:1100, hold:1700 },
+    { label:'6', end:4, hold:0 },
+  ];
+  const scene = () => beats[revealStage];
+  const complete = () => revealStage===beats.length-1 && revealProgress>=phases.length;
   const clamp = value => Math.max(0, Math.min(1, value));
   const smooth = value => { const t = clamp(value); return t * t * (3 - 2 * t); };
   let revealStage = 0, revealProgress = 0, running = false, lastPaint = -Infinity, navigationKey = '', commentaryKey = '';
@@ -69,10 +84,9 @@ export async function mountFlightExploration(container) {
         bucket.slice(0, Math.round(bucket.length * fraction)).forEach(([id]) => revealedIds.add(id));
       }
     });
-    if (revealProgress >= phases.length) groups.unresolved.forEach(([id]) => revealedIds.add(id));
     visibleGroups = Object.fromEntries(Object.entries(groups).map(([key, rows]) => [key, rows.filter(([id]) => revealedIds.has(id))]));
     tableCohort = null;
-    root.revealData = { phase:phases[revealStage], progress:revealProgress, recordIds:members('all').map(([id]) => id) };
+    root.revealData = { beat:scene().label, phase:scene().phase || null, progress:revealProgress, recordIds:members('all').map(([id]) => id) };
     root.dataset.revealedCount = String(revealedIds.size);
   }
   let selected = "all",
@@ -138,7 +152,7 @@ export async function mountFlightExploration(container) {
       cell,
       recordIds: ids,
       revealedRecordIds: members('all').map(([id]) => id),
-      revealPhase: phases[revealStage],
+      revealPhase: scene().phase || null,
       recordKeys: ids.map(identity),
       denominatorRecordIds,
     };
@@ -149,7 +163,7 @@ export async function mountFlightExploration(container) {
     root.querySelector(".selection-label").textContent = cell
       ? `${phaseNames[selected]} · highlighting ${displayLabels[cell.cause]}${cell.binStart != null ? " / " + cell.binStart + "–" + cell.binEnd : ""} · ${format(p.recordIds.length)} matching records`
       : selected === 'all' && revealProgress < phases.length
-        ? `${phases.slice(0,revealStage+1).map(k => phaseLabels[k]).join(' + ')} · ${format(p.recordIds.length)} crashes so far`
+        ? `${format(p.recordIds.length)} of ${format(records.length)} crash records introduced`
         : `${phaseNames[selected]} · ${format(p.recordIds.length)} crashes`;
     root.querySelectorAll('[data-cohort]').forEach(b => {
       b.setAttribute('aria-pressed',String(b.dataset.cohort === selected));
@@ -429,7 +443,7 @@ export async function mountFlightExploration(container) {
       .forEach((b) =>
         b.setAttribute("aria-pressed", String(b.dataset.measure === measure)),
       );
-    if (!root.querySelector(".area-detail").textContent)
+    if (!cell)
       root.querySelector(".area-detail").textContent =
         `${format(displayed.length)} of ${format(cohortRows.length)} crashes have one of these four recorded causes.`;
   }
@@ -620,16 +634,23 @@ export async function mountFlightExploration(container) {
   }
 
   function phaseProgress(terminal) {
-    return terminal === 'unresolved' ? Number(revealProgress >= phases.length) : smooth(revealProgress-phases.indexOf(terminal));
+    return smooth(revealProgress-phases.indexOf(terminal));
   }
   function renderFlowProgress() {
+    const focus=selected==='all' && !complete() ? scene().phase : null;
     for (const band of flowBands) {
       const progress = phaseProgress(band.terminal);
       band.progress = progress === 1 ? 1 : clamp((progress*band.routeLength-band.routeStart)/band.length);
     }
     svg.selectAll('path.flow-base, path.flow-selected')
       .attr('stroke-dasharray',d => `${d.progress} 1`)
-      .attr('visibility',d => d.progress > 0 ? 'visible' : 'hidden');
+      .attr('visibility',d => d.progress > 0 ? 'visible' : 'hidden')
+      .style('stroke-opacity',function(d) {
+        const emphasized=!focus || d.terminal===focus;
+        return this.classList.contains('flow-selected') ? emphasized ? .76 : .26 : emphasized ? .22 : .1;
+      });
+    svg.selectAll('text.flow-label').classed('is-current',d=>Boolean(focus && (d.key===focus || d.key==={departure:'dep-count',in_flight:'flight-count',arrival:'arrival-count'}[focus])))
+      .attr('visibility',d=>['dep-count','flight-count','arrival-count'].includes(d.key) && !members({'dep-count':'departure','flight-count':'in_flight','arrival-count':'arrival'}[d.key]).length ? 'hidden' : 'visible');
     // Do not leave invisible future stretches of ribbon as interactive hit targets.
     svg.selectAll('path.flow-hit')
       .attr('visibility',link => flowBands.filter(d => d.link===link).every(d => d.progress===1) ? 'visible' : 'hidden')
@@ -639,73 +660,126 @@ export async function mountFlightExploration(container) {
   }
 
   function renderCommentary() {
-    const key = selected === 'all' ? phases[revealStage] : selected;
+    const key = selected === 'all' ? scene().phase || 'ordered' : selected;
     const rows = members(key).map(([id]) => byId.get(id));
     const counts = d3.rollup(rows,v => v.length,r => r.cause);
     const fullCounts = d3.rollup(groups[key],v => v.length,r => byId.get(r[0]).cause);
     const leaders = [...causeOrder].sort((a,b) => (fullCounts.get(b)||0)-(fullCounts.get(a)||0)).slice(0,2).map(cause => ({cause,count:counts.get(cause)||0}));
-    const copy = {
-      departure:['Two causes stand out at takeoff.','Human factor and technical failures account for most departure crashes.'],
-      in_flight:['Human factor pulls ahead.','Technical failures remain the second-largest recorded cause.'],
-      arrival:['The gap widens on arrival.','Over half of arrival crashes are classified as human factor.'],
-      unresolved:['Half have no recorded cause.','Ground and missing-phase records sit outside the airborne sequence.'],
+    const exploring = selected !== 'all' || complete();
+    const causesVisible = selected !== 'all' || scene().causes;
+    const phaseCopy = {
+      departure:['Human factor and technical failures lead.','Together, they account for 396 of the 610 departure crashes.'],
+      in_flight:['Human factor leads in flight.','Technical failures are the second-largest recorded cause.'],
+      arrival:['Human factor stands out on arrival.','It accounts for 859 of 1,527 arrival crashes—over half.'],
+      unresolved:['Keep these records separate.','Ground records and missing phases sit outside the airborne sequence.'],
       ordered:['Human factor leads across the flight.','Technical failures come next among the recorded causes.'],
-      later:['The later phases carry more human-factor records.','Arrival accounts for most of these crashes.'],
+      later:['Arrival accounts for most of this group.','Human factor is the leading recorded cause across these later phases.'],
     }[key];
-    if (commentaryKey !== `${selected}:${key}`) {
-      commentaryKey = `${selected}:${key}`;
-      root.querySelector('[data-phase-label]').textContent = `${selected === 'all' ? String(revealStage+1).padStart(2,'0')+' / ' : ''}${phaseLabels[key] || phaseNames[key]}`;
-      root.querySelector('[data-phase-takeaway]').textContent = copy[0];
-      root.querySelector('[data-phase-explanation]').textContent = copy[1];
+    let title=phaseCopy[0], explanation=phaseCopy[1], label=phaseLabels[key] || phaseNames[key];
+    if(selected==='all') {
+      if(revealStage<=1) {
+        label='How to read this';title='Follow the crash records.';
+        explanation='Wider ribbons mean more recorded crashes. Each branch groups crashes by their recorded flight phase.';
+      } else if(revealStage===2) {
+        title='First, departure.';explanation='Watch the Departure branch: takeoff and climb enter together.';
+      } else if(revealStage===4 || revealStage===5) {
+        title='Now follow the in-flight branch.';explanation='The departure records stay in view as the next group joins them.';
+      } else if(revealStage===7 || revealStage===8) {
+        title='Next, watch arrival.';explanation='Descent, approach and landing join the same flow.';
+      } else if(revealStage===10) {
+        title='A small branch sits outside the flight.';explanation='82 records occurred on the ground; 62 have no recorded phase.';
+      } else if(complete()) {
+        label='The full view';title='Arrival is the largest group.';
+        explanation='1,527 of 2,792 crashes with a known airborne phase were recorded during arrival. Choose a phase below to compare its causes.';
+      }
     }
-    const rowsEl = d3.select(root.querySelector('.phase-cause-leaders')).selectAll('div').data(leaders,d => d.cause).join('div').attr('class','phase-cause-leader');
+    const nextKey = `${selected}:${revealStage}:${key}`;
+    if(commentaryKey!==nextKey) {
+      commentaryKey=nextKey;
+      root.querySelector('[data-phase-label]').textContent=label;
+      const heading=root.querySelector('[data-phase-takeaway]');
+      if(heading.textContent!==title) {
+        heading.classList.remove('phase-copy-enter');heading.textContent=title;
+        void heading.offsetWidth;heading.classList.add('phase-copy-enter');
+      }
+      root.querySelector('[data-phase-explanation]').textContent=explanation;
+    }
+    const rowsEl = d3.select(root.querySelector('.phase-cause-leaders')).selectAll('div').data(causesVisible ? leaders : [],d=>d.cause).join('div').attr('class','phase-cause-leader');
     rowsEl.each(function(d) {
-      const el = d3.select(this);
-      el.selectAll('span').data([displayLabels[d.cause]]).join('span').text(v => v).style('--leader-color',causeColors[d.cause]);
+      const el=d3.select(this);
+      el.selectAll('span').data([displayLabels[d.cause]]).join('span').text(v=>v).style('--leader-color',causeColors[d.cause]);
       el.selectAll('strong').data([d.count]).join('strong').text(format);
     });
-    root.querySelector('.phase-commentary-total').textContent = `${format(rows.length)} ${phaseLabels[key]?.toLowerCase() || 'selected'} crashes`;
-    root.commentary = { phase:key,recordIds:rows.map(r => r.source_id),causeCounts:Object.fromEntries(counts),leaders };
+    root.querySelector('.phase-commentary-total').textContent=causesVisible ? `${format(rows.length)} ${phaseLabels[key]?.toLowerCase() || 'selected'} crashes` : '';
+    const summary = selected==='all' && (complete() || revealStage===10)
+      ? (complete() ? ['departure','in_flight','arrival'] : ['ground','unknown']).map(phase=>({
+          phase,label:phaseLabels[phase] || (phase==='ground' ? 'On the ground' : 'Phase not recorded'),
+          count:phase==='ground' || phase==='unknown' ? members('unresolved').filter(([id])=>byId.get(id).phase===phase).length : members(phase).length,
+        })) : [];
+    d3.select(root.querySelector('.phase-summary')).selectAll('div').data(summary,d=>d.phase).join('div')
+      .attr('class',d=>`phase-summary-row${d.phase==='arrival' ? ' is-emphasized' : ''}`)
+      .each(function(d){
+        d3.select(this).selectAll('span').data([d.label]).join('span').text(v=>v);
+        d3.select(this).selectAll('strong').data([d.count]).join('strong').text(format);
+      });
+    root.commentary={phase:key,recordIds:rows.map(r=>r.source_id),causeCounts:Object.fromEntries(counts),leaders};
+    root.dataset.attentionPhase=selected==='all' && !complete() ? scene().phase || '' : '';
+    root.querySelector('.flight-commentary').classList.toggle('is-visible',revealStage>0 || exploring);
   }
   function renderRevealControls() {
-    root.dataset.revealStage = String(revealStage); root.dataset.revealProgress = String(revealProgress); root.dataset.playback = playback.status;
-    const status = playback.status;
-    const key = `${revealStage}:${status}:${revealProgress>=phases.length}`;
-    if (navigationKey !== key) { navigationKey=key; container.dispatchEvent(new CustomEvent('storybeat',{bubbles:true})); }
-    const button = root.querySelector('[data-flight-pause]');
-    button.textContent = status === 'running' || status === 'waiting' ? 'Pause' : 'Resume'; button.disabled = status === 'complete';
-    root.querySelector('[data-flight-show-all]').disabled = revealProgress >= phases.length;
-    root.querySelector('.flight-reveal-status').textContent = `${format(revealedIds.size)} / ${format(records.length)} crashes${status === 'paused' ? ' · paused' : ''}`;
+    root.dataset.revealStage=String(revealStage);root.dataset.revealProgress=String(revealProgress);
+    root.dataset.storyBeat=scene().label;root.dataset.playback=playback.status;
+    root.classList.toggle('has-started',revealStage>0);
+    root.classList.toggle('has-records',revealedIds.size>0);
+    root.querySelector('.area-section').inert=revealedIds.size===0;
+    root.querySelector('.selection-row').inert=revealedIds.size===0;
+    const ready=complete() || selected!=='all';
+    root.querySelector('.phase-controls').classList.toggle('is-ready',ready);
+    root.querySelector('.phase-controls').inert=!ready;
+    const status=playback.status;
+    const key=`${revealStage}:${status}:${complete()}`;
+    if(navigationKey!==key) {navigationKey=key;container.dispatchEvent(new CustomEvent('storybeat',{bubbles:true}));}
+    const button=root.querySelector('[data-flight-pause]');
+    button.textContent=status==='running'||status==='waiting' ? 'Pause' : 'Resume';button.disabled=complete();
+    root.querySelector('[data-flight-show-all]').disabled=complete();
+    root.querySelector('.flight-reveal-status').textContent=`${format(revealedIds.size)} / ${format(records.length)} records${status==='paused' ? ' · paused' : ''}`;
   }
   function renderReveal() {
-    if (destroyed) return;
+    if(destroyed)return;
     renderRevealControls();
-    if (active) { draw(); renderArea(); announce(false); }
+    if(active) {draw();renderArea();announce(false);}
   }
-  function stopReveal() { d3.select(root).interrupt('phase-reveal'); running = false; }
+  function stopReveal() {d3.select(root).interrupt('phase-reveal');running=false;}
   function playReveal() {
-    if (!active || document.hidden || revealProgress >= revealStage+1) return;
-    running = true; renderRevealControls();
-    const start = revealProgress, end = revealStage+1;
-    if (reduced.matches) { revealProgress = end; rebuildMembership(); renderReveal(); running = false; playback.settled(); return; }
-    lastPaint = -Infinity;
-    d3.select(root).transition('phase-reveal').duration((end-start)*motion.durations[revealStage]).ease(d3.easeLinear)
-      .tween('phase-records',() => t => {
-        revealProgress = start+(end-start)*t;
-        if (d3.now()-lastPaint >= 80 || t === 1) { lastPaint = d3.now(); rebuildMembership(); renderReveal(); }
+    if(!active || document.hidden || revealProgress>=scene().end)return;
+    running=true;renderRevealControls();
+    const start=revealProgress,end=scene().end;
+    if(reduced.matches) {revealProgress=end;rebuildMembership();renderReveal();running=false;playback.settled();return;}
+    lastPaint=-Infinity;
+    d3.select(root).transition('phase-reveal').duration((end-start)*scene().duration).ease(d3.easeLinear)
+      .tween('phase-records',()=>t=>{
+        revealProgress=start+(end-start)*t;
+        if(d3.now()-lastPaint>=80 || t===1) {lastPaint=d3.now();rebuildMembership();renderReveal();}
         else renderFlowProgress();
-      }).on('end',() => { running = false; playback.settled(); });
+      }).on('end',()=>{running=false;playback.settled();});
   }
-  function advanceReveal() { if (revealStage >= phases.length-1) return; revealStage++; playReveal(); }
-  function showAll() { stopReveal(); revealStage = phases.length-1; revealProgress = phases.length; rebuildMembership(); renderReveal(); }
-  const playback = createBeatPlayback({
-    state:() => ({running,complete:revealProgress >= phases.length,atBoundary:revealProgress >= revealStage+1}),
-    play:playReveal,pause:stopReveal,advance:advanceReveal,holdMs:() => motion.holds[revealStage],reduced,showAll,changed:renderRevealControls,
+  function advanceReveal() {
+    if(revealStage>=beats.length-1)return;
+    revealStage++;renderReveal();playReveal();playback.settled();
+  }
+  function showAll() {stopReveal();revealStage=beats.length-1;revealProgress=phases.length;rebuildMembership();renderReveal();}
+  const playback=createBeatPlayback({
+    state:()=>({running,complete:complete(),atBoundary:revealProgress>=scene().end}),
+    play:playReveal,pause:stopReveal,advance:advanceReveal,holdMs:()=>scene().hold,reduced,showAll,changed:renderRevealControls,
   });
-  root.querySelector('[data-flight-pause]').addEventListener('click',() => playback.togglePause());
-  root.querySelector('[data-flight-replay]').addEventListener('click',() => { playback.engage(); stopReveal(); revealStage=0; revealProgress=0; selected='all'; cell=null; rebuildMembership(); renderReveal(); playReveal(); });
-  root.querySelector('[data-flight-show-all]').addEventListener('click',() => { playback.hold(); showAll(); });
-  root.querySelector('.source-inspector').addEventListener('toggle',() => { if (root.querySelector('.source-inspector').open) { playback.hold(); renderArea(); } });
+  root.querySelector('[data-flight-pause]').addEventListener('click',()=>playback.togglePause());
+  root.querySelector('[data-flight-replay]').addEventListener('click',()=>{
+    playback.engage();stopReveal();revealStage=0;revealProgress=0;selected='all';cell=null;
+    root.querySelector('.area-detail').textContent='';
+    rebuildMembership();renderReveal();playback.settled();
+  });
+  root.querySelector('[data-flight-show-all]').addEventListener('click',()=>{playback.hold();showAll();});
+  root.querySelector('.source-inspector').addEventListener('toggle',()=>{if(root.querySelector('.source-inspector').open){playback.hold();renderArea();}});
 
   for (const cause of causeOrder) {
     const b = document.createElement("button");
@@ -807,12 +881,12 @@ export async function mountFlightExploration(container) {
       renderArea();
     },
     setPlaybackMode:value => playback.setMode(value),
-    finishBeat() { playback.engage(); stopReveal(); revealProgress=revealStage+1; rebuildMembership(); renderReveal(); playback.settled(); },
-    getNavigationState() { return { step:revealStage+1,total:phases.length,running,inProgress:revealProgress>revealStage && revealProgress<revealStage+1,action:revealProgress>=phases.length ? 'Continue the story' : `Reveal ${phaseLabels[phases[revealStage]]}` }; },
-    nextBeat() { if (revealProgress>=phases.length) return false; playback.engage(); if (revealProgress<revealStage+1) playReveal(); else advanceReveal(); return true; },
+    finishBeat() { playback.engage(); stopReveal(); revealProgress=scene().end; rebuildMembership(); renderReveal(); playback.settled(); },
+    getNavigationState() { return {step:revealStage+1,total:beats.length,running,inProgress:revealProgress<scene().end,action:complete() ? 'Continue the story' : 'Reveal the next beat'}; },
+    nextBeat() { if(complete())return false;playback.engage();advanceReveal();return true; },
     previousBeat() {
-      if (!revealProgress) return false;
-      playback.hold(); if (revealStage>0) { revealStage--; revealProgress=revealStage+1; } else revealProgress=0;
+      if(revealStage===0)return false;
+      playback.hold();revealStage--;revealProgress=scene().end;
       selected='all'; cell=null; rebuildMembership(); renderReveal(); return true;
     },
     setActive(value) {

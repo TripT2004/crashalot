@@ -3,14 +3,15 @@ const next = p => p.locator('[data-story-next]');
 const snapshot = p => p.locator('.flight-exploration').evaluate(r => ({
   reveal:r.revealData, sankey:r.sankeyData, area:r.areaData, selection:r.selection, commentary:r.commentary,
 }));
-async function openFrozen(page) {
+async function openFrozen(page,auto=true) {
   await page.clock.install({time:new Date('2026-11-05T12:00:00Z')});
   await page.goto('/#/another-perspective');
   await page.locator('.flight-exploration').waitFor({state:'attached'});
   await page.clock.pauseAt(new Date('2026-11-05T12:01:00Z'));
+  if(!auto)await page.locator('#playback-toggle').click();
   await page.evaluate(() => {location.hash='/flight-phase';});
   await expect(page.locator('#flight-phase')).toHaveClass(/present/);
-  await expect(page.locator('.flight-exploration')).toHaveAttribute('data-playback','running');
+  await expect(page.locator('.flight-exploration')).toHaveAttribute('data-playback',auto ? 'waiting' : 'manual');
 }
 function verifyIdentity(s,source) {
   const columns=source.columns;
@@ -27,70 +28,104 @@ function verifyIdentity(s,source) {
     expect(cell.count).toBe(expected.length);
   }
   for(const link of s.sankey.links) expect(link.value).toBe(link.recordIds.length);
-  const commentIds=s.reveal.recordIds.filter(id => byId.get(id).phase===s.commentary.phase);
+  const airborne=['departure','in_flight','arrival'];
+  const commentIds=s.reveal.recordIds.filter(id=>{
+    const phase=byId.get(id).phase,key=s.commentary.phase;
+    return key==='ordered' ? airborne.includes(phase) : key==='unresolved' ? !airborne.includes(phase) : key==='later' ? ['in_flight','arrival'].includes(phase) : phase===key;
+  });
   expect(s.commentary.recordIds).toEqual(commentIds);
   for(const leader of s.commentary.leaders) expect(leader.count).toBe(commentIds.filter(id => byId.get(id).cause===leader.cause).length);
 }
 
-test('slide five builds the same original IDs into both charts, with phase-specific commentary',async ({page,request}) => {
-  const errors=[];page.on('pageerror',e => errors.push(e.message));
-  const source=await (await request.get('/data/flight-exploration.json')).json();
-  await openFrozen(page);
-  expect(await page.locator('.slides > section').evaluateAll(nodes => nodes.map(n => n.id))).toEqual([
-    'welcome','flight-1282','change-over-time','counts-in-context','flight-phase','another-perspective','the-whole-picture','arrival',
-  ]);
+test('guided beats introduce each branch before its causes, preserving source identities in both charts',async ({page,request}) => {
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const source=await(await request.get('/data/flight-exploration.json')).json();
+  await openFrozen(page,false);
+  const root=page.locator('.flight-exploration');
+  await expect(root).toHaveAttribute('data-story-beat','0');
+  await expect(page.locator('.sankey-stage')).toBeHidden();
+  await expect(page.locator('.phase-controls')).toBeHidden();
+  await next(page).click();await expect(root).toHaveAttribute('data-story-beat','1');
+  await expect(page.locator('[data-phase-takeaway]')).toHaveText('Follow the crash records.');
+  expect((await snapshot(page)).reveal.recordIds).toHaveLength(0);
+  await next(page).click();await expect(root).toHaveAttribute('data-story-beat','1.5');
+  await expect(root).toHaveAttribute('data-attention-phase','departure');
   await page.clock.runFor(1000);
   let s=await snapshot(page);verifyIdentity(s,source);
   expect(s.reveal.recordIds.length).toBeGreaterThan(0);expect(s.reveal.recordIds.length).toBeLessThan(610);
   expect(s.commentary.phase).toBe('departure');
+  await expect(page.locator('.phase-cause-leader')).toHaveCount(0);
   await next(page).click();
   s=await snapshot(page);verifyIdentity(s,source);expect(s.reveal.recordIds).toHaveLength(610);
-  expect(s.commentary.leaders).toEqual([{cause:'human',count:215},{cause:'technical',count:181}]);
-  await page.clock.runFor(1350);
-  s=await snapshot(page);verifyIdentity(s,source);expect(s.commentary.phase).toBe('in_flight');
+  await next(page).click();await expect(root).toHaveAttribute('data-story-beat','2');
+  await expect(page.locator('.phase-cause-leader')).toHaveCount(2);
+  expect((await snapshot(page)).commentary.leaders).toEqual([{cause:'human',count:215},{cause:'technical',count:181}]);
+  await next(page).click();await expect(root).toHaveAttribute('data-story-beat','2.5');
+  expect((await snapshot(page)).reveal.recordIds).toHaveLength(610);
+  await expect(root).toHaveAttribute('data-attention-phase','in_flight');
+  await next(page).click();await page.clock.runFor(1000);
+  s=await snapshot(page);verifyIdentity(s,source);
   expect(s.reveal.recordIds.length).toBeGreaterThan(610);expect(s.reveal.recordIds.length).toBeLessThan(1265);
-  await next(page).click();
+  await next(page).click();await next(page).click();
+  await expect(root).toHaveAttribute('data-story-beat','3.5');
   s=await snapshot(page);verifyIdentity(s,source);expect(s.reveal.recordIds).toHaveLength(1265);
   expect(s.commentary.leaders).toEqual([{cause:'human',count:267},{cause:'technical',count:168}]);
-  await page.clock.runFor(1500);
-  s=await snapshot(page);verifyIdentity(s,source);expect(s.commentary.phase).toBe('arrival');
-  expect(s.reveal.recordIds.length).toBeGreaterThan(1265);expect(s.reveal.recordIds.length).toBeLessThan(2936);
-  await next(page).click();
-  s=await snapshot(page);verifyIdentity(s,source);expect(s.reveal.recordIds).toEqual(source.rows.map(r => r[0]));
-  expect(s.area.displayedCount).toBe(2253);
+  await next(page).click();await expect(root).toHaveAttribute('data-story-beat','4');
+  expect((await snapshot(page)).reveal.recordIds).toHaveLength(1265);
+  await next(page).click();await page.clock.runFor(1300);
+  s=await snapshot(page);verifyIdentity(s,source);
+  expect(s.reveal.recordIds.length).toBeGreaterThan(1265);expect(s.reveal.recordIds.length).toBeLessThan(2792);
+  await next(page).click();await next(page).click();
+  await expect(root).toHaveAttribute('data-story-beat','5');
+  s=await snapshot(page);verifyIdentity(s,source);expect(s.reveal.recordIds).toHaveLength(2792);
   expect(s.commentary.leaders).toEqual([{cause:'human',count:859},{cause:'technical',count:271}]);
-  await expect(page.locator('[data-story-position]')).toHaveText('5 of 8 · Reveal 3 of 3');
-  await page.clock.fastForward(60000);
-  await expect(page.locator('#flight-phase')).toHaveClass(/present/);
+  expect(s.sankey.links.find(l=>l.key==='unresolved').value).toBe(0);
+  await next(page).click();await expect(root).toHaveAttribute('data-story-beat','5.5');
+  await page.clock.runFor(550);
+  s=await snapshot(page);verifyIdentity(s,source);
+  expect(s.reveal.recordIds.length).toBeGreaterThan(2792);expect(s.reveal.recordIds.length).toBeLessThan(2936);
   await next(page).click();
-  await expect(page.locator('#another-perspective')).toHaveClass(/present/);
+  s=await snapshot(page);verifyIdentity(s,source);expect(s.reveal.recordIds).toEqual(source.rows.map(r=>r[0]));
+  expect(s.area.displayedCount).toBe(2253);
+  await next(page).click();await expect(root).toHaveAttribute('data-story-beat','6');
+  await expect(root).toHaveAttribute('data-playback','complete');
+  await expect(page.locator('[data-phase-takeaway]')).toHaveText('Arrival is the largest group.');
+  await expect(page.locator('.phase-controls')).toBeVisible();
+  await expect(page.locator('.phase-summary-row strong')).toHaveText(['610','655','1,527']);
+  await expect(page.locator('[data-story-position]')).toHaveText('5 of 8 · Reveal 12 of 12');
+  await page.clock.fastForward(60000);await expect(page.locator('#flight-phase')).toHaveClass(/present/);
+  await next(page).click();await expect(page.locator('#another-perspective')).toHaveClass(/present/);
   expect(errors).toEqual([]);
 });
 
 test('natural Auto completion, Pause/Resume, Back and Replay retain linked data',async ({page,request}) => {
-  const source=await (await request.get('/data/flight-exploration.json')).json();
+  const source=await(await request.get('/data/flight-exploration.json')).json();
   await openFrozen(page);
   const root=page.locator('.flight-exploration');
-  await page.clock.runFor(500);
+  await page.clock.runFor(3500);
   await page.locator('[data-flight-pause]').click();
   const held=(await snapshot(page)).reveal.recordIds;
+  expect(held.length).toBeGreaterThan(0);expect(held.length).toBeLessThan(610);
   await page.clock.runFor(5000);expect((await snapshot(page)).reveal.recordIds).toEqual(held);
   await page.locator('[data-flight-pause]').click();
-  await page.clock.runFor(8500);
+  await page.clock.runFor(30000);
   await expect(root).toHaveAttribute('data-playback','complete');
   verifyIdentity(await snapshot(page),source);
-  await page.locator('[data-story-back]').click();
-  const back=await snapshot(page);verifyIdentity(back,source);expect(back.reveal.recordIds).toHaveLength(1265);
+  await page.locator('[data-story-back]').click();await page.locator('[data-story-back]').click();
+  const back=await snapshot(page);verifyIdentity(back,source);expect(back.reveal.recordIds).toHaveLength(2792);
+  await expect(root).toHaveAttribute('data-story-beat','5');
   await page.clock.runFor(10000);expect((await snapshot(page)).reveal.recordIds).toEqual(back.reveal.recordIds);
   await page.locator('[data-flight-replay]').click();
-  await page.clock.runFor(800);
-  const replay=await snapshot(page);verifyIdentity(replay,source);expect(replay.reveal.recordIds.length).toBeLessThan(610);
+  await expect(root).toHaveAttribute('data-story-beat','0');
+  await page.clock.runFor(4000);
+  const replay=await snapshot(page);verifyIdentity(replay,source);expect(replay.reveal.recordIds.length).toBeGreaterThan(0);expect(replay.reveal.recordIds.length).toBeLessThan(610);
 });
 
 for (const [layout,viewport] of [['desktop',{width:1440,height:1000}],['mobile',{width:390,height:844}]]) {
   test(`${layout}: phase ribbons draw through consecutive paths at fixed thickness`,async ({page}) => {
     await page.setViewportSize(viewport);
-    await openFrozen(page);
+    await openFrozen(page,false);
+    await next(page).click();await next(page).click();
     const paths = () => page.locator('path.flow-base').evaluateAll(nodes => nodes.map(n => ({
       terminal:n.dataset.terminal,path:n.getAttribute('d'),width:n.getAttribute('stroke-width'),
       progress:Number(n.getAttribute('stroke-dasharray').split(' ')[0]),visibility:n.getAttribute('visibility'),
@@ -119,6 +154,8 @@ for (const [layout,viewport] of [['desktop',{width:1440,height:1000}],['mobile',
     expect(later.filter(d=>d.terminal==='departure').every(d=>d.progress===1)).toBe(true);
     expect(later.map(({terminal,path,width})=>({terminal,path,width}))).toEqual(early.map(({terminal,path,width})=>({terminal,path,width})));
     expect(later.filter(d=>d.terminal==='arrival').every(d=>d.visibility==='hidden')).toBe(true);
+    await next(page).click();await next(page).click();await next(page).click();
+    await page.clock.runFor(400);
     await page.locator('[data-flight-pause]').click();
     const paused=await paths();await page.clock.runFor(3000);expect(await paths()).toEqual(paused);
   });
