@@ -16,6 +16,7 @@ const beats = [
   { label:'4.5', end:10, unitMs:650, hold:900 },
   { label:'5', end:10, hold:1200 },
   { label:'5.5', end:11, unitMs:1800, hold:0 },
+  { label:'6', end:11, hold:0 },
 ];
 
 export async function mountDecadeTrend(container) {
@@ -69,6 +70,7 @@ export async function mountDecadeTrend(container) {
   const technology = note.append('p').attr('class','decade-trend__technology').text('Ground-proximity warnings and crew resource management added layers of protection.');
   const decline = note.append('p').attr('class','decade-trend__decline').text('Recorded crashes fell in every completed decade after the 1970s peak, reaching 269 in the 2010s — 71% fewer.');
   const fatalCopy = note.append('p').attr('class','decade-trend__fatal-copy').text('Fatal crashes fell even further: from 475 in the 1970s to 98 in the 2010s — 79% fewer.');
+  const bridge = note.append('p').attr('class','decade-trend__bridge').text('The phase of flight is one place to start.');
   const transport = root.append('div').attr('class','decade-trend__transport');
   const status = transport.append('span');
   const controls = transport.append('div');
@@ -88,6 +90,7 @@ export async function mountDecadeTrend(container) {
   const scope = select(container.closest('main')).select('.trend-scope');
   function notify() { container.dispatchEvent(new CustomEvent('storybeat',{bubbles:true})); }
   const complete = () => stage === beats.length-1 && progress >= beats[stage].end;
+  const autoComplete = () => stage>=10 && progress>=11;
   function drawSeries(s, reveal) {
     const full = Math.min(1,reveal/.85);
     const generator = line().x(d=>x(d.label)+x.bandwidth()/2).y(d=>y(d[s.key]));
@@ -108,13 +111,13 @@ export async function mountDecadeTrend(container) {
       root.classed('has-started',stage>0);
       scope.classed('is-visible',stage>0).attr('aria-hidden',String(stage===0));
       period.text(stage<4 ? '1950s–1970s' : stage<9 ? '1980s–2024' : 'The full view · 1950–2024');
-      const title=stage<4 ? 'The decline did not start immediately.' : stage<9 ? 'Technological innovations started turning things around' : 'These are <i>total</i> crashes,';
+      const title=stage===11 ? 'What factors affect these numbers?' : stage<4 ? 'The decline did not start immediately.' : stage<9 ? 'Technological innovations started turning things around' : 'These are <i>total</i> crashes,';
       if(headline.html()!==title) {
         headline.classed('decade-heading-enter',false).html(title);
         void headline.node().offsetWidth;
         headline.classed('decade-heading-enter',true);
       }
-      for(const [node,visible]of [[opening,stage>=1&&stage<4],[technology,stage>=5&&stage<9],[decline,stage>=6&&stage<9],[fatalCopy,stage>=10]]) {
+      for(const [node,visible]of [[opening,stage>=1&&stage<4],[technology,stage>=5&&stage<9],[decline,stage>=6&&stage<9],[fatalCopy,stage===10],[bridge,stage===11]]) {
         node.classed('is-visible',visible).attr('aria-hidden',String(!visible));
       }
       note.classed('is-visible',stage>0).attr('aria-hidden',String(stage===0));
@@ -123,7 +126,7 @@ export async function mountDecadeTrend(container) {
     }
     const state=playback.status;
     root.attr('data-playback',state).attr('data-stage',stage).attr('data-beat',beats[stage].label).attr('data-progress',progress);
-    pause.text(state==='running'||state==='waiting' ? 'Pause' : 'Resume').property('disabled',complete());
+    pause.text(state==='running'||state==='waiting' ? 'Pause' : 'Resume').property('disabled',autoComplete());
     status.text(state==='paused' ? 'Paused' : complete() ? '1950–2024 · Full view' : '');
   }
   function stop() { root.interrupt('reveal');running=false; }
@@ -136,9 +139,9 @@ export async function mountDecadeTrend(container) {
     root.transition('reveal').duration((end-start)*beats[stage].unitMs).ease(easeLinear).tween('decades',()=>t=>{progress=start+(end-start)*t;render();}).on('end',finish);
   }
   function advance() {if(stage>=beats.length-1)return;stage++;render();play();playback.settled();}
-  function showAll() {stop();stage=beats.length-1;progress=beats[stage].end;render();}
+  function showAll(lastStage=Math.max(stage,10)) {stop();stage=lastStage;progress=beats[stage].end;render();}
   const playback=createBeatPlayback({
-    state:()=>({running,complete:complete(),atBoundary:progress>=beats[stage].end}),
+    state:()=>({running,complete:autoComplete(),atBoundary:progress>=beats[stage].end}),
     play,pause:stop,advance,holdMs:()=>beats[stage].hold,reduced,showAll,changed(){render();notify();},
   });
   function resize() {
@@ -163,7 +166,7 @@ export async function mountDecadeTrend(container) {
     getNavigationState(){return{step:stage+1,total:beats.length,running,inProgress:progress<beats[stage].end,action:complete() ? 'Continue the story' : 'Reveal the next beat'};},
     nextBeat(){if(complete())return false;playback.engage();advance();return true;},
     previousBeat(){if(stage===0)return false;playback.hold();stage--;progress=beats[stage].end;render();notify();return true;},
-    showLastBeat(){playback.hold();showAll();notify();},
+    showLastBeat(){playback.hold();showAll(11);notify();},
     destroy(){playback.destroy();observer.disconnect();root.remove();},
   };
 }

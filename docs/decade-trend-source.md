@@ -83,3 +83,7 @@ D3 owns the existing bar, line and fade interpolation. Text changes fade as whol
 - 1996: Honeywell introduces enhanced GPWS with forward-looking terrain alerts. [Honeywell technology history](https://www.honeywellaerospace.com/us/en/insights/articles/five-times-honeywell-was-first-in-safety-innovation).
 
 Dates refer to specified introductions or U.S. requirements, not universal worldwide fleet adoption. The user asked to review candidates first; no new chart annotations have been added.
+
+### Bridge into the phase story
+
+After the fatal-crash comparison, one explicit Next opens Beat 6: “What factors affect these numbers?” / “The phase of flight is one place to start.” Both completed lines and the legend remain visible. Auto stops at Beat 5.5 and never opens the bridge or changes slides. A second Next enters the Sankey. Back returns to the fatal comparison with its complete plotted values. Reduced-motion Auto likewise stops at the fatal comparison.

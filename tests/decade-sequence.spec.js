@@ -56,6 +56,13 @@ test('text leads each sweep; line drawing, bar removal and fatal overlay have se
  await expect(chart(page).locator('.decade-trend__fatal-partial-line')).toHaveAttribute('opacity','1');
  await expect(chart(page).locator('.decade-trend__fatal-copy')).toContainText('79% fewer');
  await expect(chart(page).locator('.decade-trend__context')).toHaveCount(0);
+ await next(page).click();await expect(chart(page)).toHaveAttribute('data-beat','6');
+ await expect(chart(page).locator('h2')).toHaveText('What factors affect these numbers?');
+ await expect(chart(page).locator('.decade-trend__bridge')).toBeVisible();
+ await expect(chart(page).locator('.decade-trend__fatal-copy')).toBeHidden();
+ await expect(chart(page).locator('.decade-trend__fatal-line')).toHaveAttribute('stroke-dashoffset','0');
+ await page.locator('[data-story-back]').click();await expect(chart(page)).toHaveAttribute('data-beat','5.5');
+ await expect(chart(page).locator('.decade-trend__fatal-copy')).toBeVisible();
  await page.locator('[data-story-back]').click();await expect(chart(page)).toHaveAttribute('data-beat','5');
  await expect(chart(page).locator('.decade-trend__fatal-line')).toHaveAttribute('opacity','0');
  await chart(page).getByRole('button',{name:'Replay',exact:true}).click();

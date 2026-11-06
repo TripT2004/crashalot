@@ -61,6 +61,13 @@ test('decades run naturally through the line morph, then wait indefinitely for N
   await expect(root.locator('.decade-trend__partial-point')).toHaveAttribute('opacity', '1');
   await page.clock.fastForward(60000);
   await expect(page).toHaveURL(/counts-in-context$/);
+  await expect(root).toHaveAttribute('data-beat','5.5');
+  await next(page).click();
+  await expect(root).toHaveAttribute('data-beat','6');
+  await expect(root.locator('h2')).toHaveText('What factors affect these numbers?');
+  await expect(root.locator('.decade-trend__fatal-line')).toHaveAttribute('stroke-dashoffset','0');
+  await page.clock.fastForward(60000);
+  await expect(page).toHaveURL(/counts-in-context$/);
   await next(page).click();
   await expect(page).toHaveURL(/flight-phase$/);
 });
