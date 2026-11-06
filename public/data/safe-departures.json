@@ -1,0 +1,178 @@
+{
+ "source": {
+  "name": "NTSB U.S. Civil Aviation Accident Statistics, 2005–2024",
+  "table": "Table 6 · Part 121 scheduled service (departures, fatal accidents); Table 29 audit (individual fatal accidents)",
+  "url": "https://www.ntsb.gov/safety/Pages/research.aspx",
+  "workbook": "data/reference/ntsb-aviation-statistics-2005-2024.xlsx",
+  "audit": "data/reference/ntsb-part121-fatal-aircraft-audit.json",
+  "unit": "departures",
+  "definition": "A fatal accident includes fatal injuries on the ground. Each 2005–2024 scheduled fatal accident involved exactly one eligible Part 121 aircraft, so fatal accidents equal departures with a fatal accident."
+ },
+ "years": [
+  {
+   "year": 2005,
+   "departures": 10910460,
+   "fatalAccidents": 3
+  },
+  {
+   "year": 2006,
+   "departures": 10627481,
+   "fatalAccidents": 2
+  },
+  {
+   "year": 2007,
+   "departures": 10734170,
+   "fatalAccidents": 0
+  },
+  {
+   "year": 2008,
+   "departures": 10282575,
+   "fatalAccidents": 0
+  },
+  {
+   "year": 2009,
+   "departures": 9564891,
+   "fatalAccidents": 1
+  },
+  {
+   "year": 2010,
+   "departures": 9467282,
+   "fatalAccidents": 0
+  },
+  {
+   "year": 2011,
+   "departures": 9419064,
+   "fatalAccidents": 0
+  },
+  {
+   "year": 2012,
+   "departures": 9241935,
+   "fatalAccidents": 0
+  },
+  {
+   "year": 2013,
+   "departures": 9268061,
+   "fatalAccidents": 0
+  },
+  {
+   "year": 2014,
+   "departures": 9049491,
+   "fatalAccidents": 0
+  },
+  {
+   "year": 2015,
+   "departures": 8975795,
+   "fatalAccidents": 0
+  },
+  {
+   "year": 2016,
+   "departures": 9107454,
+   "fatalAccidents": 0
+  },
+  {
+   "year": 2017,
+   "departures": 9124174,
+   "fatalAccidents": 0
+  },
+  {
+   "year": 2018,
+   "departures": 9353814,
+   "fatalAccidents": 1
+  },
+  {
+   "year": 2019,
+   "departures": 9575941,
+   "fatalAccidents": 1
+  },
+  {
+   "year": 2020,
+   "departures": 5785066,
+   "fatalAccidents": 0
+  },
+  {
+   "year": 2021,
+   "departures": 7491648,
+   "fatalAccidents": 0
+  },
+  {
+   "year": 2022,
+   "departures": 8301283,
+   "fatalAccidents": 1
+  },
+  {
+   "year": 2023,
+   "departures": 8740250,
+   "fatalAccidents": 0
+  },
+  {
+   "year": 2024,
+   "departures": 9061967,
+   "fatalAccidents": 0
+  }
+ ],
+ "accidents": [
+  {
+   "id": "DCA05MA070",
+   "date": "2005-06-07",
+   "aircraft": "Embraer 170",
+   "fatalities": 1
+  },
+  {
+   "id": "DCA06MA009",
+   "date": "2005-12-08",
+   "aircraft": "Boeing 737-700",
+   "fatalities": 1
+  },
+  {
+   "id": "DCA06MA010",
+   "date": "2005-12-19",
+   "aircraft": "Grumman G-73T",
+   "fatalities": 20
+  },
+  {
+   "id": "DFW06FA056",
+   "date": "2006-01-16",
+   "aircraft": "Boeing 737-524",
+   "fatalities": 1
+  },
+  {
+   "id": "DCA06MA064",
+   "date": "2006-08-27",
+   "aircraft": "Bombardier CRJ-100",
+   "fatalities": 49
+  },
+  {
+   "id": "DCA09MA027",
+   "date": "2009-02-12",
+   "aircraft": "Bombardier DHC-8-402",
+   "fatalities": 50
+  },
+  {
+   "id": "DCA18MA142",
+   "date": "2018-04-17",
+   "aircraft": "Boeing 737 7H4",
+   "fatalities": 1
+  },
+  {
+   "id": "DCA20MA002",
+   "date": "2019-10-17",
+   "aircraft": "Saab 2000",
+   "fatalities": 1
+  },
+  {
+   "id": "DCA23LA109",
+   "date": "2022-12-31",
+   "aircraft": "Embraer ERJ 170-200 LR",
+   "fatalities": 1
+  }
+ ],
+ "callout": {
+  "label": "Alaska Airlines Flight 1282",
+  "date": "2024-01-05",
+  "note": "Nonfatal accident; one of the departures without a fatal accident."
+ },
+ "totals": {
+  "departures": 184082802,
+  "fatalAccidents": 9
+ }
+}

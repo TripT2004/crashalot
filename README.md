@@ -47,6 +47,10 @@ The committed `public/data/flight-exploration.json` lets a fresh checkout run wi
 Run `npm run test:flight` for the linked-exploration regression checks, and `npx playwright test tests/story-transport.spec.js tests/auto-playback.spec.js tests/flight-reveal.spec.js` for story navigation and Auto playback checks (requires Google Chrome). The Playwright web-server configuration builds and starts the site unless port 5175 already serves a local preview. Set `FLIGHT_SCREENSHOT_DIR` to an existing absolute directory to retain desktop/mobile screenshots.
 
 
+## Central reveal: needle in a haystack
+
+The seventh slide, `#/the-whole-picture`, shows every 2005–2024 U.S. scheduled departure from the slide 3 NTSB cohort as dots of 100,000, with the 9 departures that had a fatal accident as needles. Click a dot to zoom (three labeled levels, down to one dot per departure). Brushing the year strip links the haystack, the percentage readout and the accident list. See [source and interaction notes](docs/safe-departures-source.md). Run `npx playwright test tests/safe-departures.spec.js` for its checks.
+
 ## Presentation playback
 
 Auto is on by default. The fixed seatbelt pictogram toggles automatic reveals; the fixed reading-light pictogram toggles light/dark appearance. Active symbols glow. Auto completes the opening fragments, scale comparison, decade trend, and phase explanation within the current slide; changing slides always requires explicit navigation. Pause, Back and Manual cancel queued reveals; hidden tabs and inactive slides suspend playback. Reduced-motion Auto presents a complete static view. See `src/components/beat-playback.js` for the view-local controller and the component files for scene timings.
