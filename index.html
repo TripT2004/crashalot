@@ -11,15 +11,19 @@
     <header class="presentation-header">
       <a class="presentation-brand" href="#/welcome">Eyecandy <span>/ Flying</span></a>
       <nav class="story-stages" aria-label="Story chapters"><a href="#/change-over-time" data-stage="notice">Notice</a><span aria-hidden="true">/</span><a href="#/another-perspective" data-stage="reconsider">Reconsider</a><span aria-hidden="true">/</span><a href="#/flight-phase" data-stage="inspect">Inspect</a></nav>
-      <div class="presentation-utilities" aria-label="Presentation settings">
-        <button type="button" class="utility-button" id="theme-toggle" aria-label="Switch to dark mode" title="Switch to dark mode">
-          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 13A9 9 0 0 1 11 3.2 9 9 0 1 0 20.8 13Z"/></svg>
-          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      <div class="presentation-utilities" role="group" aria-label="Overhead controls">
+        <button type="button" class="utility-button" id="playback-toggle" aria-label="Auto reveals" title="Auto reveals on · click for manual control" aria-pressed="true">
+          <svg class="utility-icon seatbelt-icon" viewBox="0 0 32 24" aria-hidden="true">
+            <path class="belt-strap" d="M2 10h8v6H2zm21 0h7v6h-7z"/>
+            <rect x="10" y="7" width="8" height="12" rx="1.5"/>
+            <path d="M18 9h5v8h-5m-4-6v4"/>
+          </svg>
         </button>
-        <button type="button" class="utility-button playback-button" id="playback-toggle" aria-label="Auto chart reveals" title="Automatically reveal the decades; never advances slides" hidden aria-pressed="false">
-          <span>Auto reveals</span>
-          <svg class="icon-manual" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 3 14 9-7 1-3 7-4-17Z"/></svg>
-          <svg class="icon-auto" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z"/></svg>
+        <button type="button" class="utility-button" id="theme-toggle" aria-label="Cabin light" title="Cabin light on · click for dark mode" aria-pressed="true">
+          <svg class="utility-icon reading-light-icon" viewBox="0 0 28 24" aria-hidden="true">
+            <path d="M10 3h12m-6 0v4m-3 0 6 2-3 8-8-3 5-7Z"/>
+            <path class="lamp-rays" d="m7 18-2 3m5-2-1 3m-4-7-3 1"/>
+          </svg>
         </button>
         <span id="presentation-theme-status" class="visually-hidden" role="status"></span>
       </div>

@@ -7,7 +7,9 @@ async function expectStableNext(page, initial) {
   for (const key of ['x', 'y', 'width', 'height']) expect(current[key]).toBe(initial[key]);
 }
 async function scale(page) {
-  await page.goto('/#/change-over-time');
+  await page.goto('/#/another-perspective');
+  await page.locator('#playback-toggle').click(); // Manual sequencing for these transport checks.
+  await page.evaluate(() => { location.hash = '/change-over-time'; });
   await expect(page.locator('.scale-comparison')).toBeVisible();
   await expect(next(page)).toBeEnabled();
 }
@@ -49,6 +51,7 @@ test('Next stays fixed while settling running and paused scale beats; routes pre
 
 test('reading keys scroll the exploration without advancing; explicit footer still navigates', async ({ page }) => {
   await page.goto('/#/flight-phase');
+  await page.locator('[data-flight-show-all]').click();
   await page.locator('.jump-to-causes').click();
   await expect(page.locator('#flight-causes-title')).toBeFocused();
   const view = page.locator('#flight-phase .view');
@@ -60,25 +63,7 @@ test('reading keys scroll the exploration without advancing; explicit footer sti
     await expect(page).toHaveURL(/flight-phase$/);
   }
   await next(page).click();
-  await expect(page).toHaveURL(/arrival$/);
-});
-
-test('Auto is scoped to chart reveals and Next settles at a reader-controlled endpoint', async ({ page }) => {
-  await scale(page);
-  await expect(page.locator('#playback-toggle')).toBeHidden();
-  await page.goto('/#/counts-in-context');
-  await expect(page.locator('#playback-toggle')).toBeVisible();
-  await expect(page.locator('#playback-toggle')).toHaveAccessibleName('Auto chart reveals');
-  const nextBounds = await next(page).boundingBox();
-  await page.locator('#playback-toggle').click();
-  await expectStableNext(page, nextBounds);
-  await next(page).click();
-  await expectStableNext(page, nextBounds);
-  await page.waitForTimeout(2200);
-  await expect(page.locator('[data-story-position]')).toHaveText('4 of 8 · Reveal 1 of 3');
-  for (let i = 0; i < 2; i++) { await next(page).click(); await next(page).click(); }
-  await expect(page).toHaveURL(/counts-in-context$/);
-  await expect(page.locator('[data-story-position]')).toHaveText('4 of 8 · Reveal 3 of 3');
+  await expect(page).toHaveURL(/another-perspective$/);
 });
 
 test('all decades fit mobile and retain readable labels, including the partial period', async ({ page }) => {
@@ -86,7 +71,7 @@ test('all decades fit mobile and retain readable labels, including the partial p
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/#/counts-in-context');
   await expect(page.locator('.decade-trend--narrow')).toBeVisible();
-  await next(page).click(); await next(page).click();
+  await expect(page.locator('.decade-trend')).toHaveAttribute('data-playback', 'complete');
   const plot = page.locator('.decade-trend__plot');
   expect(await plot.evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
   const svg = await plot.locator('svg').boundingBox();

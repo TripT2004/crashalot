@@ -3,6 +3,7 @@ import { annotation, annotationCalloutElbow } from 'd3-svg-annotation';
 import 'number-flow';
 import { continuous } from 'number-flow/plugins';
 import './scale-comparison.css';
+import { createBeatPlayback } from './beat-playback.js';
 
 const integer = format(',d');
 const compact = format('~s');
@@ -81,7 +82,7 @@ export async function mountScaleComparison(container) {
   const transport = root.append('div').attr('class', 'scale-comparison__transport');
   const controls = transport.append('div');
   const pause = controls.append('button').attr('type', 'button').attr('class', 'text-button').text('Pause').on('click', () => {
-    if (running) stop(); else play();
+    playback.togglePause();
   });
   controls.append('button').attr('type', 'button').attr('class', 'text-button').text('Replay').on('click', restart);
   const yearIntro = root.append('p').attr('class', 'scale-comparison__year-intro').attr('aria-hidden', 'true')
@@ -94,7 +95,7 @@ export async function mountScaleComparison(container) {
   const accidentEnd = ACCIDENT_START + ACCIDENT_MS;
   const departureEnd = IMPACT_END + 700;
   let stageLimit = accidentEnd;
-  let phase = '', lastFrame = null, wasRunning = false, lastNavigationKey = '';
+  let phase = '', lastFrame = null, lastNavigationKey = '';
   let geometry;
   let displayedYear = first.year;
   const tickOpacity = new Map();
@@ -206,9 +207,11 @@ export async function mountScaleComparison(container) {
       }
     }
     const atBoundary = elapsed === 0 || elapsed >= stageLimit;
-    const label = running || atBoundary ? 'Pause' : 'Resume';
+    const playbackStatus = playback.status;
+    root.attr('data-playback', playbackStatus);
+    const label = playbackStatus === 'running' || playbackStatus === 'waiting' ? 'Pause' : 'Resume';
     if (pause.text() !== label) pause.text(label);
-    pause.property('disabled', atBoundary || reducedMotion.matches);
+    pause.property('disabled', elapsed >= END);
     const action = elapsed < accidentEnd ? 'Count the fatal accidents' : elapsed < departureEnd ? 'Count the departures' : 'Move through the years';
     const navigationKey = `${action}:${running}:${atBoundary}:${elapsed >= END}`;
     if (navigationKey !== lastNavigationKey) {
@@ -220,21 +223,22 @@ export async function mountScaleComparison(container) {
   function stop() { clock?.stop(); running = false; render(); }
   function play() {
     if (!active || destroyed || running || elapsed >= stageLimit || document.hidden) return;
-    if (reducedMotion.matches) { elapsed = stageLimit; lastFrame = null; tickOpacity.clear(); render(); return; }
+    if (reducedMotion.matches) { elapsed = stageLimit; lastFrame = null; tickOpacity.clear(); render(); playback.settled(); return; }
     running = true;
     const from = elapsed;
     clock = timer(time => {
       elapsed = Math.min(stageLimit, from + time);
-      if (elapsed === stageLimit) { clock.stop(); running = false; }
-      render();
+      if (elapsed === stageLimit) { clock.stop(); running = false; render(); playback.settled(); }
+      else render();
     });
     render();
   }
   function finishBeat() {
+    playback.engage();
     clock?.stop(); running = false; elapsed = stageLimit;
     lastFrame = null; tickOpacity.clear();
     rows.forEach(row => { row.lastValueTime = -Infinity; });
-    render();
+    render(); playback.settled();
   }
   function advanceStage() {
     if (running) return;
@@ -244,30 +248,30 @@ export async function mountScaleComparison(container) {
     play();
   }
   function restart() {
-    stop(); elapsed = 0; stageLimit = accidentEnd; phase = ''; lastFrame = null; tickOpacity.clear();
+    playback.engage(); stop(); elapsed = 0; stageLimit = accidentEnd; phase = ''; lastFrame = null; tickOpacity.clear();
     rows.forEach(row => { row.lastValueTime = -Infinity; });
-    render();
+    render(); if (playback.mode) play();
   }
 
-  function onVisibility() { if (document.hidden) { wasRunning = running; stop(); } else if (wasRunning) play(); }
-  function onMotion() { if (reducedMotion.matches && running) { stop(); elapsed = stageLimit; lastFrame = null; tickOpacity.clear(); render(); } }
+  function showAll() {
+    stop(); elapsed = END; stageLimit = END; lastFrame = null; tickOpacity.clear();
+    rows.forEach(row => { row.lastValueTime = -Infinity; }); render();
+  }
+  const playback = createBeatPlayback({
+    state: () => ({ running, complete: elapsed >= END, atBoundary: elapsed >= stageLimit }),
+    play, pause: stop, advance: advanceStage,
+    holdMs: () => elapsed < departureEnd ? 280 : 450,
+    reduced: reducedMotion, showAll, changed: render,
+  });
   const observer = new ResizeObserver(layout);
   observer.observe(plot.node());
   window.addEventListener('resize', layout);
-  document.addEventListener('visibilitychange', onVisibility);
-  reducedMotion.addEventListener('change', onMotion);
   layout();
   return {
     resize: layout,
     finishBeat,
-    showLastBeat() {
-      stop();
-      elapsed = END;
-      stageLimit = END;
-      lastFrame = null;
-      tickOpacity.clear();
-      render();
-    },
+    showLastBeat() { playback.hold(); showAll(); },
+    setPlaybackMode: value => playback.setMode(value),
     getNavigationState() {
       const step = elapsed >= END ? 4 : elapsed >= departureEnd ? 3 : elapsed >= accidentEnd ? 2 : 1;
       const action = running ? (elapsed < accidentEnd ? 'Counting fatal accidents' : elapsed < departureEnd ? 'Counting departures' : 'Adding the years') : ['Count fatal accidents', 'Count departures', 'Add the following years', 'Continue the story'][step - 1];
@@ -276,7 +280,7 @@ export async function mountScaleComparison(container) {
     previousBeat() {
       if (!active || elapsed === 0) return false;
       const target = elapsed > departureEnd ? departureEnd : elapsed > accidentEnd ? accidentEnd : 0;
-      stop();
+      playback.hold();
       elapsed = target;
       stageLimit = target === departureEnd ? departureEnd : accidentEnd;
       lastFrame = null;
@@ -286,10 +290,10 @@ export async function mountScaleComparison(container) {
     },
     nextBeat() {
       if (!active || elapsed >= END) return false;
-      advanceStage();
+      playback.engage(); advanceStage();
       return true;
     },
-    setActive(value) { if (value === active) return; active = value; if (!active) { wasRunning = false; stop(); } else render(); },
-    destroy() { stop(); destroyed = true; observer.disconnect(); window.removeEventListener('resize', layout); document.removeEventListener('visibilitychange', onVisibility); reducedMotion.removeEventListener('change', onMotion); root.remove(); },
+    setActive(value) { active = value; playback.setActive(value); },
+    destroy() { playback.destroy(); destroyed = true; observer.disconnect(); window.removeEventListener('resize', layout); root.remove(); },
   };
 }

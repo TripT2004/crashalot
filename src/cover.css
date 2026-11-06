@@ -1,6 +1,9 @@
 /* The cover shares the navigation rail and its spacing with every story page. */
 body.presentation-cover { --presentation-header-height:0px; }
-.presentation-cover .presentation-header { display:none; }
+/* Keep the utilities in their shared top-right position without adding header
+   height to the cover composition. */
+.presentation-cover .presentation-header { display:flex; position:absolute; top:0; left:var(--presentation-gutter); right:var(--presentation-gutter); height:60px; margin-inline:0; justify-content:flex-end; }
+.presentation-cover .presentation-brand, .presentation-cover .story-stages { display:none; }
 .presentation-cover .reveal .slide-number { display:none !important; }
 .presentation-cover .story-position { display:none; }
 .presentation-cover .presentation-keyboard-hint { margin-left:0; font-size:12px; gap:30px; }

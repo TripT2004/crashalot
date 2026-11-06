@@ -1,11 +1,26 @@
 <div class="flight-exploration" data-prevent-swipe>
   <p class="cohort-caption"></p>
-  <div class="sankey-stage">
-    <svg
-      class="flight-flow"
-      role="group"
-      aria-label="Sequential accident-phase splits; select a ribbon or use the phase buttons"
-    ></svg>
+  <div class="flight-story-grid">
+    <div class="flight-story-plot">
+      <div class="sankey-stage">
+        <svg class="flight-flow" role="group" aria-label="Crashes by recorded flight phase; select a ribbon or use the phase buttons"></svg>
+      </div>
+      <div class="flight-reveal-controls">
+        <span class="flight-reveal-status"></span>
+        <div>
+          <button type="button" class="text-button" data-flight-pause>Pause</button>
+          <button type="button" class="text-button" data-flight-replay>Replay</button>
+          <button type="button" class="text-button" data-flight-show-all>Show full view</button>
+        </div>
+      </div>
+    </div>
+    <aside class="flight-commentary">
+      <p class="eyebrow" data-phase-label></p>
+      <h2 data-phase-takeaway aria-live="polite"></h2>
+      <p class="phase-explanation" data-phase-explanation></p>
+      <div class="phase-cause-leaders"></div>
+      <p class="phase-commentary-total"></p>
+    </aside>
   </div>
   <div
     class="phase-controls"
@@ -28,7 +43,7 @@
   <div class="area-section" role="region" aria-labelledby="flight-causes-title">
     <div class="area-heading">
       <h2 id="flight-causes-title" tabindex="-1">
-        How do the recorded causes change?
+        The causes behind these crashes
       </h2>
       <div class="measure-controls" role="group" aria-label="Ribbon thickness">
         <button type="button" data-measure="count" aria-pressed="true">

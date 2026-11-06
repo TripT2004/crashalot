@@ -11,6 +11,7 @@ import './presentation.css';
 import './cover.css';
 import { mountDecadeTrend } from './components/decade-trend.js';
 import { mountScaleComparison } from './components/scale-comparison.js';
+import { createBeatPlayback } from './components/beat-playback.js';
 
 document.querySelector('.slides').innerHTML = `<section id="welcome">${cover}</section>${opening}${chapters}`;
 
@@ -38,13 +39,14 @@ const themeOptions = {
 };
 const themeToggle = document.querySelector('#theme-toggle');
 const playbackToggle = document.querySelector('#playback-toggle');
-let autoPlayback = false;
+let autoPlayback = true;
 playbackToggle.addEventListener('click', () => {
   autoPlayback = !autoPlayback;
   playbackToggle.setAttribute('aria-pressed', String(autoPlayback));
-  playbackToggle.setAttribute('aria-label', 'Auto chart reveals');
-  playbackToggle.title = 'Automatically reveal the decades; never advances slides';
+  playbackToggle.setAttribute('aria-label', 'Auto reveals');
+  playbackToggle.title = autoPlayback ? 'Auto reveals on · click for manual control' : 'Auto reveals off · click to turn on';
   chartInstances.forEach(chart => chart.setPlaybackMode?.(autoPlayback));
+  hookPlayback.setMode(autoPlayback);
 });
 const status = document.querySelector('#presentation-theme-status');
 let currentTheme = 'default';
@@ -78,8 +80,8 @@ async function setTheme(name) {
     palette.forEach((colorIndex, index) => document.documentElement.style.setProperty(`--viz-series-${index + 1}`, schemePaired[colorIndex]));
     previous.remove();
     currentTheme = selected;
-    themeToggle.setAttribute('aria-label', theme.mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode');
-    themeToggle.title = theme.mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    themeToggle.setAttribute('aria-pressed', String(theme.mode === 'light'));
+    themeToggle.title = theme.mode === 'dark' ? 'Cabin light off · click for light mode' : 'Cabin light on · click for dark mode';
     try { localStorage.setItem('crashalot-component-theme', selected); } catch { /* Theme persistence is optional. */ }
     window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: selected } }));
     status.textContent = '';
@@ -113,13 +115,14 @@ function updateNavigation() {
   let position = `${slidePosition} · ${slide.dataset.beat || 'The journey'}`;
   if (cover) position = `${slidePosition} · Welcome`;
   if (slide.id === 'flight-1282') position = `${slidePosition} · Reveal ${hookStep + 1} of 5`;
-  if (['change-over-time', 'counts-in-context'].includes(slide.id)) position = state ? `${slidePosition} · Reveal ${state.step} of ${state.total}` : `${slidePosition} · Loading…`;
+  if (['change-over-time', 'counts-in-context', 'flight-phase'].includes(slide.id)) position = state ? `${slidePosition} · Reveal ${state.step} of ${state.total}` : `${slidePosition} · Loading…`;
   if (storyPosition.textContent !== position) storyPosition.textContent = position;
   storyBack.hidden = cover;
-  playbackToggle.hidden = !chart?.setPlaybackMode;
-  storyNext.disabled = presentation.isLastSlide() || (['change-over-time', 'counts-in-context'].includes(slide.id) && !chart);
+  playbackToggle.hidden = false;
+  storyNext.disabled = presentation.isLastSlide() || (['change-over-time', 'counts-in-context', 'flight-phase'].includes(slide.id) && !chart);
 }
 function previousBeat() {
+  if (presentation.getCurrentSlide()?.id === 'flight-1282') hookPlayback.hold();
   const chart = chartInstances.find(chart => chart.slide === presentation.getCurrentSlide());
   if (chart?.previousBeat?.()) return;
   presentation.prev();
@@ -131,7 +134,8 @@ function nextBeat() {
   if (state?.running || state?.inProgress) { chart.finishBeat?.(); return; }
   if (chart?.nextBeat?.()) return;
   // Wait for the comparison to mount rather than skipping its opening beat.
-  if (['change-over-time', 'counts-in-context'].includes(slide?.id) && !chart) return;
+  if (['change-over-time', 'counts-in-context', 'flight-phase'].includes(slide?.id) && !chart) return;
+  if (slide?.id === 'flight-1282') hookPlayback.engage();
   presentation.next();
 }
 storyNext.addEventListener('click', nextBeat);
@@ -141,7 +145,8 @@ function updateChrome() {
   const index = presentation.getIndices().h;
   document.body.classList.toggle('presentation-cover', index === 0);
   document.body.classList.toggle('presentation-hook', presentation.getCurrentSlide()?.id === 'flight-1282');
-  const stage = index <= 3 ? 'notice' : index <= 5 ? 'reconsider' : 'inspect';
+  const slideId = presentation.getCurrentSlide()?.id;
+  const stage = ['flight-phase', 'arrival'].includes(slideId) ? 'inspect' : ['another-perspective', 'the-whole-picture'].includes(slideId) ? 'reconsider' : 'notice';
   document.querySelectorAll('[data-stage]').forEach(link => {
     if (link.dataset.stage === stage) link.setAttribute('aria-current', 'step');
     else link.removeAttribute('aria-current');
@@ -150,14 +155,33 @@ function updateChrome() {
     chart.resize?.();
     chart.setActive?.(chart.slide === presentation.getCurrentSlide());
   });
+  hookPlayback.setActive(presentation.getCurrentSlide()?.id === 'flight-1282');
   updateNavigation();
 }
 const hook = document.getElementById('flight-1282');
+// Reading holds follow the material: sentence, photograph, safe landing, question.
+const hookHolds = [900, 1400, 800, 2600];
+let completingHook = false;
+const hookPlayback = createBeatPlayback({
+  state: () => ({ running:false, complete:Number(hook.dataset.hookStep || 0) >= 4, atBoundary:true }),
+  play() {}, pause() {},
+  advance() { if (presentation.getCurrentSlide() === hook) presentation.nextFragment(); },
+  holdMs: () => hookHolds[Number(hook.dataset.hookStep || 0)],
+  reduced: reducedMotion,
+  showAll() {
+    completingHook = true;
+    while (presentation.getCurrentSlide() === hook && presentation.nextFragment()) { /* Fragments only; never next slide. */ }
+    completingHook = false;
+  },
+  changed() { hook.dataset.playback = hookPlayback.status; },
+});
+hookPlayback.setMode(autoPlayback);
 function updateHook() {
   const shown = [...hook.querySelectorAll('.fragment.visible')];
   const step = shown.length ? Math.max(...shown.map(node => Number(node.dataset.fragmentIndex))) + 1 : 0;
   hook.dataset.hookStep = step;
   hook.querySelector('.hook-event').setAttribute('aria-hidden', String(step === 4));
+  if (!completingHook) hookPlayback.settled();
   updateNavigation();
 }
 hook.addEventListener('keydown', event => { if (event.target.closest('button, a') && (event.key === 'Enter' || event.key === ' ')) event.stopPropagation(); });

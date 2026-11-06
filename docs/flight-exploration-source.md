@@ -4,11 +4,29 @@ Integrated November 5, 2026. This supersedes the older operation→phase compone
 
 ## Narrative and interaction
 
-Question: **Where in a flight do these crashes happen?** Supporting line: “Follow the recorded phase, then compare the recorded causes.” This follows the earlier worldwide decade trend while explicitly narrowing the period from 1950–2024 to 1970–2024.
+This is now slide 5, immediately after the worldwide decade trend. **Where in a flight do these crashes happen?** narrows the period from 1950–2024 to 1970–2024.
 
-This is one optional exploration beat. Next leaves the slide; chart selections never become click gates and Auto does not select anything. The phase filter updates the cause chart. A cause or cause/period highlight selects the corresponding original IDs back through the Sankey. Count/Percentage retains the selection. Leaving and returning to the chapter retains state. Clear selection or Escape resets phase/highlight while preserving the selected measure.
+Three cumulative beats add departure, in-flight, then arrival crashes. The right-hand commentary explains the leading recorded causes in the phase being added. Both charts read a shared set of original revealed source IDs; the cause chart accumulates the same phases instead of jumping ahead to the complete dataset. Its four-cause denominator remains unchanged. Phase controls, exact values, and backward cause highlighting retain the existing identity contract.
 
-The page scrolls within the existing slide viewport. “Compare causes below” scrolls to and focuses the cause heading; reduced motion makes that jump immediate. Native phase/measure/legend buttons and keyboard SVG ribbon buttons are isolated from Reveal’s navigation keys. The exact-values table supplies a native keyboard path to every period/cause selection. Ground and missing phases remain outside the ordered sequence.
+The reveal grows each cause bucket proportionally within a phase, choosing deterministic prefixes of actual source IDs. It is a visual build, not an asserted chronological order. Counts remain integers and memberships remain real records. All final phase counts and IDs reconcile to the portable source. Ground/missing-phase records are added on completion in their separate branch, outside the airborne phase sequence.
+
+The timing is 2.1 seconds for departure, 2.1 seconds for in-flight, and 2.6 seconds for arrival, with 280/450 ms breathing holds. A bounded 80 ms data-paint cadence keeps the Sankey and React cause chart on the same committed membership while avoiding per-frame React remounts. Auto never changes slides. Pause/Resume, Replay, Next, and Back use the same view-local playback controller as the earlier charts. Back removes later phases from both charts. Reduced-motion Auto shows the complete static view.
+
+Selecting a phase explicitly finishes the reveal, pauses Auto, and focuses the selected cohort in the Sankey, commentary, and cause chart. Cause/period selections, measure changes, or opening source details also pause the reveal for inspection. Show full view provides an explicit skip. Leaving and returning preserves progress and selections. Clear selection or Escape finishes the reveal and resets phase/highlight while preserving the measure.
+
+The page scrolls within its slide viewport. Compare causes below focuses the cause heading. Keyboard controls remain isolated from presentation navigation, and the exact-values table supplies a keyboard path to every period/cause selection.
+
+### Commentary evidence
+
+All commentary is descriptive of this source cohort. The leading two displayed causes, calculated from the retained source IDs, are:
+
+| Phase | Human factor | Technical failure | Phase total |
+| --- | ---: | ---: | ---: |
+| Departure | 215 | 181 | 610 |
+| In flight | 267 | 168 | 655 |
+| Arrival | 859 | 271 | 1,527 |
+
+Human factor plus technical failure account for most departure records (396/610). Human factor leads in flight. On arrival, human factor alone accounts for over half (859/1,527). These statements describe recorded classifications, without inferring unrecorded failure domains or phase risk.
 
 ## Source and scope
 
@@ -55,7 +73,8 @@ The component’s bubbling `flight-safety:selection` and backward-compatible `fl
 ## Verification
 
 - `npm run build`: production bundle succeeds.
-- `npm run test:flight`: three production-browser tests cover exact linked IDs and denominator arithmetic; count/percentage state retention; keyboard controls versus Reveal navigation; Next/Back state preservation; Escape; theme changes; mobile overflow; reduced motion; and explicit cause-jump focus.
+- `npm run test:flight`: production-browser tests cover exact linked IDs and denominator arithmetic; count/percentage state retention; keyboard controls versus Reveal navigation; Next/Back state preservation; Escape; theme changes; mobile overflow; reduced motion; and explicit cause-jump focus.
+- `tests/flight-reveal.spec.js` verifies partial-reveal IDs, per-phase counts and leaders, both-chart membership, cumulative cause cells, slide order, natural completion, Pause/Resume, Back/Replay, and waiting for explicit Next.
 - The browser check caught and fixed a Reveal integration hazard: the area region uses a `div role="region"`, because nested `section` elements would be interpreted as additional slides.
 - [Motion/interaction review](flight-exploration-motion-review.md): independent code/screenshot PASS. That review does not establish assistive-technology usability or independently validate source classifications.
 

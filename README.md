@@ -1,6 +1,6 @@
 # crashalot
 
-An aviation data presentation for the 6730 group project. Narrative, evidence, charts, interactions, and visual language are developed together, desktop first. The presentation combines a landing page, Flight 1282 opening, count and decade-trend beats, question-led chapter previews, and a linked flight-phase/cause exploration. Remaining storyboard placeholders are not finished visualizations.
+An aviation data presentation for the 6730 group project. Narrative, evidence, charts, interactions, and visual language are developed together, desktop first. The presentation combines a landing page, Flight 1282 opening, count and decade-trend beats, an animated phase/cause explanation in fifth position, and question-led chapter previews. Remaining storyboard placeholders are not finished visualizations.
 
 ## Run locally
 
@@ -40,8 +40,13 @@ The earlier website, chart gallery, generated gallery payload, previews, and pro
 
 ## Linked flight-phase and cause exploration
 
-The `#/flight-phase` chapter integrates the approved sequential Sankey and Nivo AreaBump. It shares original IDs across both views, uses eleven five-year periods (1970–2024), and provides Count/Percentage, keyboard selections, an exact-values table, and reduced-motion handling. It follows the presentation’s existing light/dark palette and narration. See [source and interaction contract](docs/flight-exploration-source.md) and the [motion/UX PASS](docs/flight-exploration-motion-review.md).
+The fifth slide, `#/flight-phase`, integrates a phase-by-phase sequential Sankey and linked Nivo AreaBump with right-hand leading-cause commentary. It shares original IDs across both views, uses eleven five-year periods (1970–2024), and provides Count/Percentage, keyboard selections, an exact-values table, and reduced-motion handling. It follows the presentation’s existing light/dark palette and narration. See [source and interaction contract](docs/flight-exploration-source.md) and the [motion/UX PASS](docs/flight-exploration-motion-review.md).
 
 The committed `public/data/flight-exploration.json` lets a fresh checkout run without the ignored raw snapshot. To regenerate from the matching retained source, use `npm run data:flight`; to verify it without writing, use `uv run python scripts/build_flight_exploration.py --check`.
 
-Run `npm run test:flight` for the production-browser regression checks (requires Google Chrome). The Playwright web-server configuration builds and starts the site unless port 5175 already serves a local preview. Set `FLIGHT_SCREENSHOT_DIR` to an existing absolute directory to retain desktop/mobile screenshots.
+Run `npm run test:flight` for the linked-exploration regression checks, and `npx playwright test tests/story-transport.spec.js tests/auto-playback.spec.js tests/flight-reveal.spec.js` for story navigation and Auto playback checks (requires Google Chrome). The Playwright web-server configuration builds and starts the site unless port 5175 already serves a local preview. Set `FLIGHT_SCREENSHOT_DIR` to an existing absolute directory to retain desktop/mobile screenshots.
+
+
+## Presentation playback
+
+Auto is on by default. The fixed seatbelt pictogram toggles automatic reveals; the fixed reading-light pictogram toggles light/dark appearance. Active symbols glow. Auto completes the opening fragments, scale comparison, decade trend, and phase explanation within the current slide; changing slides always requires explicit navigation. Pause, Back and Manual cancel queued reveals; hidden tabs and inactive slides suspend playback. Reduced-motion Auto presents a complete static view. See `src/components/beat-playback.js` for the view-local controller and the component files for scene timings.

@@ -3,6 +3,8 @@ const screenshotDir = process.env.FLIGHT_SCREENSHOT_DIR;
 async function chapter(page) {
   await page.goto("/#/flight-phase");
   await expect(page.locator("#flight-phase")).toHaveClass(/present/);
+  await page.locator('[data-flight-show-all]').waitFor();
+  if (await page.locator('[data-flight-show-all]').isEnabled()) await page.locator('[data-flight-show-all]').click();
   await expect(page.locator('[data-testid="area.technical"]')).toBeAttached();
 }
 const state = (page) =>
@@ -74,7 +76,7 @@ test("phase, cause and exact period link by source IDs; measure preserves select
   expect(errors).toEqual([]);
 });
 
-test("keyboard chart controls do not advance Reveal; optional exploration retains state across slides", async ({
+test("keyboard chart controls do not advance Reveal; completed exploration retains state across slides", async ({
   page,
 }) => {
   await chapter(page);
@@ -91,7 +93,7 @@ test("keyboard chart controls do not advance Reveal; optional exploration retain
   await page.keyboard.press("ArrowRight");
   expect(page.url()).toContain("#/flight-phase");
   await page.locator("[data-story-next]").click();
-  await expect(page).toHaveURL(/#\/arrival$/);
+  await expect(page).toHaveURL(/#\/another-perspective$/);
   await page.locator("[data-story-back]").click();
   await expect(page).toHaveURL(/#\/flight-phase$/);
   expect((await state(page)).selection.cohort).toBe("later");

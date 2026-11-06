@@ -102,3 +102,24 @@ The earlier cyan oval is replaced with an inline SVG aircraft window: ivory cabi
 
 
 Navigation correction: the user rejected the filled square Next treatment and the changing “Finish animation” label. Next now uses the lighter outlined style, a constant label and a fixed 104 × 44 px footprint across pages and chart states. Pressing it during an active reveal still settles that reveal; the navigation no longer changes its visible name or geometry to expose that playback state.
+
+
+## Auto default and overhead pictograms · November 5, 2026
+
+Checkpoint `88991d1` preserves the opening-page polish and stable Next button. The user then made Auto the default, requested tighter pacing, and explicitly prohibited automatic slide changes. Auto now runs the opening's existing fragments and both animated charts; it stops on each completed slide. The linked exploration remains user-operated.
+
+Both charts share a small view-local playback controller with no slide-navigation API. Natural completion and an explicit Next can queue the following reveal, using 280 ms then 450 ms holds instead of a uniform two seconds. The decade timeline moves at 1,050 ms per reveal unit, with easing applied to individual marks rather than the entire multi-bar sequence. Opening holds are content-specific (900 / 1,400 / 800 / 2,600 ms), allowing the sentence, photograph, and landing to register before the closing question. These are reviewable timing choices, not evidence of a tested comprehension optimum.
+
+Manual pauses the current reveal and cancels pending work. Back holds the earlier beat for inspection. Hidden tabs and inactive slides suspend timers and motion; Auto resumes from the retained point on return unless the reader explicitly paused. Reduced-motion Auto shows the complete static view rather than racing through intermediate states.
+
+A delegated ImageGen study proposed overhead strips, circular wells, and sign tiles. The user rejected all of those physical/ornamental boards, then explicitly chose plain pictograms with no panel or housing and only restrained bloom. The implementation therefore uses fixed seatbelt and reading-light SVGs in generous invisible click targets. Auto and light-theme states glow; geometry stays constant. Rejected boards are exploration artifacts, not accepted direction.
+
+
+Cover follow-up: the earlier header-hiding exception also hid the new utility pictograms. The cover now shows those controls in their shared top-right position, while keeping the brand/chapter links hidden and preserving the cover composition. Auto and theme can both be set before starting the story; that playback choice carries into the opening.
+
+
+## Phase explanation moved to slide 5 · November 6, 2026
+
+At the user's request, `flight-phase` now directly follows the decade chart. It builds departure → in-flight → arrival records, with a right-hand leading-cause explanation. The commentary is short and descriptive; source/method details remain inspectable below.
+
+The Sankey and cause chart accumulate the same original-ID subset at every committed reveal update. The commentary describes only the current added phase; selecting a phase explicitly finishes the build and focuses all views on that cohort. Both charts rewind together. Ground/missing-phase records stay in their separate branch. Next remains stable and Auto never changes slides. See the updated [interaction/evidence contract](flight-exploration-source.md) for exact counts, timings, and reveal ordering.

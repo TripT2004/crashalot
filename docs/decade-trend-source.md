@@ -33,7 +33,7 @@ The total is 71% lower in the 2010s than the 1970s (1 − 269 / 923 = 70.86%). C
 
 Shared Next/Back retrace these three beats. Timing is provisional and centralized in the chart's `motion` settings. Reduced motion jumps to each endpoint. Counts retain a fixed linear 0–1,000 scale.
 
-The header replaces Appearance with a sun/moon theme button and a neighboring icon for Manual/Auto. Playback remains scoped to the trend visualization; other scenes do not yet implement automatic playback. Manual is the default. Music is a future direction, not implemented.
+The header contains fixed seatbelt and reading-light pictograms. The seatbelt toggles Auto, which is now the default; the reading light toggles light/dark appearance. Active symbols glow without swapping geometry. Auto covers the opening fragments and both animated charts, with explicit Next required to move to a different slide. Music is a future direction, not implemented.
 
 ## Historical annotations
 
@@ -58,6 +58,6 @@ Transformation checks: production build and diff whitespace check pass. Browser 
 
 ## Playback mode
 
-A compact Manual/Auto icon in the shared header defaults to Manual. Auto waits two seconds after a beat's animation completes, then advances within this chart through the line transformation; it stops at the final beat. Selecting Manual cancels the pending advance without interrupting a running reveal. Pause cancels both animation and any pending advance; Resume continues Auto. Back pauses Auto to let the previous beat remain inspectable; Replay restarts in the selected mode. Leaving the slide cancels playback and pending timers. Reduced motion still retains the two-second dwell between automatic beats.
+Auto is the default. The decade sequence uses 1,050 ms per reveal unit, easing each mark separately, with 280 ms after the rise/peak beat and 450 ms after the decline beat. It stops at the final line chart and requires explicit Next to change slides. Manual pauses the current reveal and cancels any pending advance. Pause/Resume, Back and Replay retain direct reader control. Leaving the slide or hiding the tab suspends work, preserving state. Reduced-motion Auto shows the final static chart immediately.
 
-Playback verification: production build and whitespace checks pass. Browser review observed automatic progression from the first beat through the final transformation, Pause holding the current beat, Resume restarting playback, and switching to Manual clearing the pending two-second advance.
+Playback verification covers natural completion, short boundary holds, stable navigation geometry, manual override, pause/resume, Back/Replay, tab visibility, slide departure, reduced motion, and the prohibition on automatic slide changes.

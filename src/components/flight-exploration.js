@@ -5,6 +5,7 @@ import view from "./flight-exploration/view.html?raw";
 import "./flight-exploration/style.css";
 import { createRoot } from "react-dom/client";
 import { AreaBump } from "@nivo/bump";
+import { createBeatPlayback } from "./beat-playback.js";
 export async function mountFlightExploration(container) {
   const response = await fetch(
     `${import.meta.env.BASE_URL}data/flight-exploration.json`,
@@ -49,8 +50,31 @@ export async function mountFlightExploration(container) {
     ),
   };
 
-  const minYear = d3.min(meta, (r) => r.year),
-    maxYear = d3.max(meta, (r) => r.year);
+  const phases = ['departure', 'in_flight', 'arrival'];
+  const phaseLabels = { departure:'Departure', in_flight:'In flight', arrival:'Arrival', unresolved:'Ground / unknown' };
+  const motion = { durations:[2100, 2100, 2600], holds:[280, 450] };
+  const clamp = value => Math.max(0, Math.min(1, value));
+  const smooth = value => { const t = clamp(value); return t * t * (3 - 2 * t); };
+  let revealStage = 0, revealProgress = 0, running = false, lastPaint = -Infinity, navigationKey = '', commentaryKey = '';
+  let revealedIds = new Set(), visibleGroups = Object.fromEntries(Object.keys(groups).map(k => [k, []]));
+  // Build each phase across its cause categories together. These are source-ID
+  // subsets for a visual reveal, never a fabricated chronological sequence.
+  const phaseBuckets = phases.map(phase => d3.group(groups[phase], r => byId.get(r[0]).cause));
+  const members = key => visibleGroups[key];
+  function rebuildMembership() {
+    revealedIds = new Set();
+    phases.forEach((phase, i) => {
+      const fraction = smooth(revealProgress - i);
+      for (const bucket of phaseBuckets[i].values()) {
+        bucket.slice(0, Math.round(bucket.length * fraction)).forEach(([id]) => revealedIds.add(id));
+      }
+    });
+    if (revealProgress >= phases.length) groups.unresolved.forEach(([id]) => revealedIds.add(id));
+    visibleGroups = Object.fromEntries(Object.entries(groups).map(([key, rows]) => [key, rows.filter(([id]) => revealedIds.has(id))]));
+    tableCohort = null;
+    root.revealData = { phase:phases[revealStage], progress:revealProgress, recordIds:members('all').map(([id]) => id) };
+    root.dataset.revealedCount = String(revealedIds.size);
+  }
   let selected = "all",
     cell = null,
     hoverBin = 0,
@@ -81,7 +105,7 @@ export async function mountFlightExploration(container) {
   const areaElement = root.querySelector(".area-stage"),
     reactRoot = createRoot(areaElement);
   function selectedRecords() {
-    return groups[selected].filter(([id]) => {
+    return members(selected).filter(([id]) => {
       const r = byId.get(id);
       return (
         !cell ||
@@ -93,7 +117,7 @@ export async function mountFlightExploration(container) {
   }
   function payload() {
     const ids = selectedRecords().map((r) => r[0]);
-    const denominatorRecordIds = groups[selected]
+    const denominatorRecordIds = members(selected)
       .map((r) => r[0])
       .filter((id) => {
         const r = byId.get(id);
@@ -113,23 +137,24 @@ export async function mountFlightExploration(container) {
       measure,
       cell,
       recordIds: ids,
+      revealedRecordIds: members('all').map(([id]) => id),
+      revealPhase: phases[revealStage],
       recordKeys: ids.map(identity),
       denominatorRecordIds,
     };
   }
   function announce(persist) {
     const p = payload();
-    const extra = cell
-      ? ` → ${data.rules.cause_labels[cell.cause]}${cell.binStart != null ? " / " + cell.binStart + "–" + cell.binEnd : ""}`
-      : "";
+    root.querySelector('.selection-label').setAttribute('aria-live',persist ? 'polite' : 'off');
     root.querySelector(".selection-label").textContent = cell
       ? `${phaseNames[selected]} · highlighting ${displayLabels[cell.cause]}${cell.binStart != null ? " / " + cell.binStart + "–" + cell.binEnd : ""} · ${format(p.recordIds.length)} matching records`
-      : `Phase filter: ${phaseNames[selected]} · ${format(p.recordIds.length)} records`;
-    root
-      .querySelectorAll("[data-cohort]")
-      .forEach((b) =>
-        b.setAttribute("aria-pressed", String(b.dataset.cohort === selected)),
-      );
+      : selected === 'all' && revealProgress < phases.length
+        ? `${phases.slice(0,revealStage+1).map(k => phaseLabels[k]).join(' + ')} · ${format(p.recordIds.length)} crashes so far`
+        : `${phaseNames[selected]} · ${format(p.recordIds.length)} crashes`;
+    root.querySelectorAll('[data-cohort]').forEach(b => {
+      b.setAttribute('aria-pressed',String(b.dataset.cohort === selected));
+      b.textContent = `${b.dataset.cohort === 'all' ? 'All' : phaseLabels[b.dataset.cohort]} · ${format(members(b.dataset.cohort).length)}`;
+    });
     root
       .querySelectorAll(".cause-legend [data-cause]")
       .forEach((b) =>
@@ -159,8 +184,10 @@ export async function mountFlightExploration(container) {
       new CustomEvent("flight-safety:selection", { bubbles: true, detail: p }),
     );
     inspect(p);
+    renderCommentary();
   }
   function choose(key) {
+    playback.hold(); showAll();
     selected = selected === key ? "all" : key;
     cell = null;
     root.querySelector(".area-detail").textContent = "";
@@ -178,7 +205,7 @@ export async function mountFlightExploration(container) {
         ? overlay.interrupt().transition().duration(420).ease(d3.easeCubicOut)
         : overlay.interrupt();
     const selectedCount = (d) =>
-      groups[d.terminal].reduce((n, r) => n + active.has(r[0]), 0);
+      members(d.terminal).reduce((n, r) => n + active.has(r[0]), 0);
     target
       .attr("stroke-width", (d) => selectedCount(d) * unit)
       .attr("d", (d) => {
@@ -213,9 +240,9 @@ export async function mountFlightExploration(container) {
   function renderArea() {
     if (destroyed || !active) return;
     const bins = periodBins(),
-      members = groups[selected].map(([id]) => byId.get(id));
-    const displayed = members.filter((r) => causeOrder.includes(r.cause));
-    const excluded = members.filter((r) => !causeOrder.includes(r.cause));
+      cohortRows = members(selected).map(([id]) => byId.get(id));
+    const displayed = cohortRows.filter((r) => causeOrder.includes(r.cause));
+    const excluded = cohortRows.filter((r) => !causeOrder.includes(r.cause));
     const totals = bins.map(
       (b) =>
         displayed.filter((r) => r.year >= b.start && r.year <= b.end).length,
@@ -224,7 +251,7 @@ export async function mountFlightExploration(container) {
     const series = causeOrder.map((cause) => ({
       id: cause,
       data: bins.map((b, i) => {
-        const ids = members
+        const ids = cohortRows
           .filter(
             (r) => r.year >= b.start && r.year <= b.end && r.cause === cause,
           )
@@ -250,6 +277,7 @@ export async function mountFlightExploration(container) {
     }));
     root.areaData = {
       measure,
+      recordIds: cohortRows.map(r => r.source_id),
       bins,
       series,
       cells: allCells,
@@ -369,6 +397,7 @@ export async function mountFlightExploration(container) {
           );
         },
         onClick: (s, e) => {
+          playback.hold();
           const b = bins[pointIndex(e)];
           const same = cell?.cause === s.id && cell?.binStart === b.start;
           cell = same
@@ -390,7 +419,7 @@ export async function mountFlightExploration(container) {
     const otherCount = excluded.filter((r) => r.cause === "other").length,
       unknownCount = excluded.filter((r) => r.cause === "unknown").length;
     root.querySelector(".area-caption").textContent =
-      `Others (${format(otherCount)}) and Not Recorded (${format(unknownCount)}) are excluded from this chart, retained in the Sankey. Percentages use only these four displayed causes in each period. ${measure === "count" ? "Thickness = raw count." : "Thickness = percentage; nonempty periods total 100%."} 2025 is the right boundary, not an included year.`;
+      `Others: ${format(otherCount)} · Cause not recorded: ${format(unknownCount)}. These remain in the Sankey. Percentage compares the four shown causes within each period.`;
     root.querySelector(".area-reading").textContent =
       `Order = rank · thickness = ${measure === "count" ? "raw count" : "percentage of the four displayed causes"}.`;
     root
@@ -400,9 +429,10 @@ export async function mountFlightExploration(container) {
       );
     if (!root.querySelector(".area-detail").textContent)
       root.querySelector(".area-detail").textContent =
-        `${format(displayed.length)} displayed / ${format(members.length)} phase-selected records · ${measure === "count" ? "raw counts" : "percentages of four displayed causes"} · 11 five-year periods`;
+        `${format(displayed.length)} of ${format(cohortRows.length)} crashes have one of these four recorded causes.`;
   }
   function renderExactTable(cells, bins) {
+    if (!root.querySelector(".source-inspector").open && revealProgress < phases.length) return;
     if (tableCohort === selected) return;
     tableCohort = selected;
     const body = root.querySelector(".exact-table tbody");
@@ -433,6 +463,7 @@ export async function mountFlightExploration(container) {
           String(cell?.cause === cause && cell?.binStart === bin.start),
         );
         button.addEventListener("click", () => {
+          playback.hold();
           cell =
             cell?.cause === cause && cell?.binStart === bin.start
               ? null
@@ -469,259 +500,160 @@ export async function mountFlightExploration(container) {
       `${data.source.dataset} · revision ${data.source.revision.slice(0, 12)} · mapping ${data.rules.version}. Source IDs are unique within this pinned snapshot. Full record keys include dataset + revision + ID. Five-year periods and raw-count semantics are versioned; no technical-domain inference.`;
   }
 
-  function label(x, y, line1, line2, anchor = "start") {
-    const t = svg
-      .append("text")
-      .attr("x", x)
-      .attr("y", y)
-      .attr("text-anchor", anchor)
-      .attr("class", "flow-label");
-    t.append("tspan").attr("x", x).text(line1);
-    if (line2) t.append("tspan").attr("x", x).attr("dy", 19).text(line2);
-  }
   function draw() {
     if (destroyed || !active) return;
-    width = root.querySelector(".sankey-stage").getBoundingClientRect().width;
+    width = root.querySelector('.sankey-stage').getBoundingClientRect().width;
     if (width < 1) return;
     vertical = width < 560;
-    const W = vertical ? 610 : width,
-      H = vertical ? width : 470;
-    unit = (vertical ? Math.min(95, width * 0.29) : 90) / records.length;
+    const W = vertical ? 610 : width;
+    unit = (vertical ? Math.min(95, width * .29) : 90) / records.length;
     const end = vertical ? 560 : W - 18;
-    const xs = vertical
-      ? [52, 172, 292, 412]
-      : [16, W * 0.245, W * 0.49, W * 0.735];
-    const yMain = vertical ? 18 : 58;
-    const ySink = vertical ? width - 110 : 170;
-    const yUnknown = vertical ? width - 52 : 295;
+    const xs = vertical ? [52,172,292,412] : [16,W*.245,W*.49,W*.735];
+    const yMain = vertical ? 18 : 58, ySink = vertical ? width - 110 : 150, yUnknown = vertical ? width - 52 : 235;
     const specs = [
-      ["all", xs[0], yMain, 0],
-      ["ordered", xs[1], yMain, 1],
-      ["later", xs[2], yMain, 2],
-      ["arrival", xs[3], yMain, 3],
-      ["crash", end, ySink, 4],
-      ["unresolved", xs[1], yUnknown, 1],
+      ['all',xs[0],yMain], ['ordered',xs[1],yMain], ['later',xs[2],yMain],
+      ['arrival',xs[3],yMain], ['crash',end,ySink], ['unresolved',xs[1],yUnknown],
     ];
+    const nodes = specs.map(([id,x,y]) => ({ id,x0:x,x1:x+7,y0:y,sourceLinks:[],targetLinks:[] }));
+    const nodeMap = new Map(nodes.map(node => [node.id,node]));
     const links = [
-      {
-        source: "all",
-        target: "ordered",
-        key: "ordered",
-        value: groups.ordered.length,
-        rank: 0,
-      },
-      {
-        source: "all",
-        target: "unresolved",
-        key: "unresolved",
-        value: groups.unresolved.length,
-        rank: 1,
-      },
-      {
-        source: "ordered",
-        target: "later",
-        key: "later",
-        value: groups.later.length,
-        rank: 0,
-      },
-      {
-        source: "ordered",
-        target: "crash",
-        key: "departure",
-        value: groups.departure.length,
-        rank: 3,
-        outcome: true,
-      },
-      {
-        source: "later",
-        target: "arrival",
-        key: "arrival",
-        value: groups.arrival.length,
-        rank: 0,
-      },
-      {
-        source: "later",
-        target: "crash",
-        key: "in_flight",
-        value: groups.in_flight.length,
-        rank: 2,
-        outcome: true,
-      },
-      {
-        source: "arrival",
-        target: "crash",
-        key: "arrival",
-        value: groups.arrival.length,
-        rank: 1,
-        outcome: true,
-      },
-    ];
-    const layout = sankey()
-      .nodeId((d) => d.id)
-      .nodeWidth(7)
-      .nodePadding(20)
-      .nodeAlign((d) => d.column)
-      .extent([
-        [0, 0],
-        [W, H],
-      ]);
-    graph = layout({
-      nodes: specs.map((s) => ({ id: s[0], column: s[3] })),
-      links,
+      ['all','ordered','ordered',0], ['all','unresolved','unresolved',1],
+      ['ordered','later','later',0], ['ordered','crash','departure',3,true],
+      ['later','arrival','arrival',0], ['later','crash','in_flight',2,true],
+      ['arrival','crash','arrival',1,true],
+    ].map(([source,target,key,rank,outcome]) => {
+      const link = { source:nodeMap.get(source), target:nodeMap.get(target), key, rank, outcome,
+        value:members(key).length, recordIds:members(key).map(([id]) => id) };
+      link.width = link.value * unit;
+      link.source.sourceLinks.push(link); link.target.targetLinks.push(link);
+      return link;
     });
-    graph.nodes.forEach((n) => {
-      const s = specs.find((s) => s[0] === n.id);
-      n.x0 = s[1];
-      n.x1 = s[1] + 7;
-      n.y0 = s[2];
-      n.y1 = s[2] + n.value * unit;
-      n.sourceLinks.sort((a, b) => a.rank - b.rank);
-      n.targetLinks.sort((a, b) => a.rank - b.rank);
+    nodes.forEach(n => {
+      n.value = Math.max(d3.sum(n.sourceLinks,l => l.value),d3.sum(n.targetLinks,l => l.value));
+      n.y1 = n.y0 + n.value * unit;
+      n.sourceLinks.sort((a,b) => a.rank-b.rank); n.targetLinks.sort((a,b) => a.rank-b.rank);
     });
-    graph.links.forEach((l) => (l.width = l.value * unit));
-    layout.update(graph);
-    svg.selectAll("*").remove();
-    svg
-      .attr("viewBox", `0 0 ${width} ${vertical ? 620 : 315}`)
-      .attr("height", vertical ? 620 : 315);
-    svg
-      .append("desc")
-      .text(
-        `Sequential split of ${format(records.length)} scheduled revenue archive records. Width represents records, not exposure or success probabilities.`,
-      );
-    const path = (linkPath = vertical
-      ? d3
-          .linkVertical()
-          .source((d) => [d.y0, d.source.x1])
-          .target((d) => [d.y1, d.target.x0])
-      : sankeyLinkHorizontal());
-    svg
-      .append("g")
-      .selectAll("path")
-      .data(graph.links)
-      .join("path")
-      .attr("class", "flow-base")
-      .attr("d", path)
-      .attr("stroke", color)
-      .attr("stroke-width", (d) => d.width);
-    const bands = graph.links.flatMap((link) => {
+    graph = { nodes,links };
+    sankey().update(graph);
+    root.sankeyData = { recordIds:members('all').map(([id]) => id), links:links.map(l => ({ key:l.key,source:l.source.id,target:l.target.id,recordIds:l.recordIds,value:l.value })) };
+    svg.attr('viewBox',`0 0 ${width} ${vertical ? 620 : 270}`).attr('height',vertical ? 620 : 270);
+    svg.selectAll('desc').data([0]).join('desc').text(`Crashes grouped by recorded phase. ${format(revealedIds.size)} of ${format(records.length)} archive records revealed.`);
+    const path = linkPath = vertical ? d3.linkVertical().source(d => [d.y0,d.source.x1]).target(d => [d.y1,d.target.x0]) : sankeyLinkHorizontal();
+    svg.selectAll('path.flow-base').data(links,l => l.source.id+':'+l.target.id).join('path')
+      .attr('class','flow-base').attr('d',path).attr('stroke',color).attr('stroke-width',l => l.width);
+    const bands = links.flatMap(link => {
       let offset = 0;
-      const out = [];
-      for (const terminal of [
-        "arrival",
-        "in_flight",
-        "departure",
-        "unresolved",
-      ]) {
-        if (!groups[link.key].some((r) => r[1] === terminal)) continue;
-        out.push({ link, terminal, bandOffset: offset });
-        offset += groups[terminal].length;
-      }
-      return out;
-    });
-    overlay = svg
-      .append("g")
-      .selectAll("path")
-      .data(bands)
-      .join("path")
-      .attr("class", "flow-selected")
-      .attr("d", (d) => path(d.link))
-      .attr("stroke", (d) => color(d.link))
-      .attr("stroke-width", 0);
-    svg
-      .append("g")
-      .selectAll("path")
-      .data(graph.links)
-      .join("path")
-      .attr("class", "flow-hit cursor-interaction")
-      .attr("d", path)
-      .attr("stroke-width", (d) => Math.max(d.width, 32))
-      .attr("data-cohort-key", (d) => d.key)
-      .attr("tabindex", 0)
-      .attr("role", "button")
-      .attr("aria-pressed", (d) => String(selected === d.key))
-      .attr(
-        "aria-label",
-        (d) =>
-          `${phaseNames[d.key]}: ${format(d.value)} records. Select this cohort.`,
-      )
-      .on("click", (_, d) => choose(d.key))
-      .on("keydown", (e, d) => {
-        if (["Enter", " "].includes(e.key)) {
-          e.preventDefault();
-          e.stopPropagation();
-          choose(d.key);
-        }
+      return ['arrival','in_flight','departure','unresolved'].flatMap(terminal => {
+        if (!members(link.key).some(r => r[1] === terminal)) return [];
+        const band = { link,terminal,bandOffset:offset }; offset += members(terminal).length; return [band];
       });
-    svg
-      .append("g")
-      .selectAll("rect")
-      .data(graph.nodes)
-      .join("rect")
-      .attr("class", "flow-node")
-      .attr("x", (d) => (vertical ? d.y0 : d.x0))
-      .attr("y", (d) => (vertical ? d.x0 : d.y0))
-      .attr("width", (d) => (vertical ? d.y1 - d.y0 : 7))
-      .attr("height", (d) => (vertical ? 7 : d.y1 - d.y0));
+    });
+    overlay = svg.selectAll('path.flow-selected').data(bands,d => d.link.source.id+':'+d.link.target.id+':'+d.terminal).join('path')
+      .attr('class','flow-selected').attr('d',d => path(d.link)).attr('stroke',d => color(d.link)).attr('stroke-width',0);
+    svg.selectAll('path.flow-hit').data(links,l => l.source.id+':'+l.target.id).join('path')
+      .attr('class','flow-hit cursor-interaction').attr('d',path).attr('stroke-width',l => Math.max(l.width,32))
+      .attr('data-cohort-key',l => l.key).attr('tabindex',l => l.value ? 0 : -1).attr('role','button')
+      .attr('aria-hidden',l => String(!l.value)).attr('aria-pressed',l => String(selected === l.key))
+      .attr('aria-label',l => `${phaseNames[l.key]}: ${format(l.value)} records. Select this cohort.`)
+      .on('click',(_,l) => { if (l.value) choose(l.key); })
+      .on('keydown',(e,l) => { if (l.value && ['Enter',' '].includes(e.key)) { e.preventDefault(); e.stopPropagation(); choose(l.key); } });
+    svg.selectAll('rect.flow-node').data(nodes,n => n.id).join('rect').attr('class','flow-node')
+      .attr('x',n => vertical ? n.y0 : n.x0).attr('y',n => vertical ? n.x0 : n.y0)
+      .attr('width',n => vertical ? n.y1-n.y0 : 7).attr('height',n => vertical ? 7 : n.y1-n.y0);
+    const labels = [];
+    const add = (key,x,y,text,second='',anchor='start') => labels.push({key,x,y,text,second,anchor});
     if (!vertical) {
-      label(16, 22, "All records", format(records.length));
-      label(
-        xs[1],
-        22,
-        "Departure",
-        `${format(groups.ordered.length)} reach this split`,
-      );
-      label(xs[2], 22, "In flight", `${format(groups.later.length)} remain`);
-      label(xs[3], 22, "Arrival", `${format(groups.arrival.length)} remain`);
-      label(
-        width - 18,
-        ySink - 30,
-        "Known-phase records",
-        format(groups.ordered.length),
-        "end",
-      );
-      label(
-        xs[1] + 14,
-        yUnknown - 7,
-        `Ground / unknown · ${format(groups.unresolved.length)}`,
-      );
-      label(xs[1] + 14, 165, `Departure · ${format(groups.departure.length)}`);
-      label(xs[2] + 14, 179, `In flight · ${format(groups.in_flight.length)}`);
-      label(
-        width - 18,
-        116,
-        `Arrival · ${format(groups.arrival.length)}`,
-        "",
-        "end",
-      );
+      add('all',16,22,'Crashes',format(revealedIds.size));
+      add('departure',xs[1],22,'Departure'); add('in_flight',xs[2],22,'In flight'); add('arrival',xs[3],22,'Arrival');
+      add('unresolved',xs[1]+14,yUnknown-7,`Ground / unknown · ${format(members('unresolved').length)}`);
+      add('dep-count',xs[1]+14,165,format(members('departure').length));
+      add('flight-count',xs[2]+14,179,format(members('in_flight').length));
+      add('arrival-count',width-18,116,format(members('arrival').length),'','end');
     } else {
-      const tx = Math.min(width - 142, 130);
-      label(tx, 47, "All records", format(records.length));
-      label(
-        tx,
-        167,
-        "Departure",
-        `${format(groups.ordered.length)} reach split`,
-      );
-      label(tx, 287, "In flight", `${format(groups.later.length)} remain`);
-      label(tx, 407, "Arrival", `${format(groups.arrival.length)} remain`);
-      label(
-        width - 16,
-        600,
-        `Known-phase records · ${format(groups.ordered.length)}`,
-        "",
-        "end",
-      );
-      label(
-        width - 12,
-        143,
-        "Ground /",
-        `unknown · ${format(groups.unresolved.length)}`,
-        "end",
-      );
+      const tx = Math.min(width-142,130);
+      add('all',tx,47,'Crashes',format(revealedIds.size));
+      add('departure',tx,167,'Departure',format(members('departure').length));
+      add('in_flight',tx,287,'In flight',format(members('in_flight').length));
+      add('arrival',tx,407,'Arrival',format(members('arrival').length));
+      add('known',width-16,600,`${format(members('ordered').length)} airborne-phase crashes`,'','end');
+      add('unresolved',width-12,143,'Ground /',`unknown · ${format(members('unresolved').length)}`,'end');
     }
+    const text = svg.selectAll('text.flow-label').data(labels,d => d.key).join('text').attr('class','flow-label')
+      .attr('x',d => d.x).attr('y',d => d.y).attr('text-anchor',d => d.anchor);
+    text.each(function(d) {
+      d3.select(this).selectAll('tspan').data([d.text,...(d.second ? [d.second] : [])]).join('tspan')
+        .attr('x',d.x).attr('dy',(_,i) => i ? 19 : 0).text(t => t);
+    });
     update(false);
   }
+
+  function renderCommentary() {
+    const key = selected === 'all' ? phases[revealStage] : selected;
+    const rows = members(key).map(([id]) => byId.get(id));
+    const counts = d3.rollup(rows,v => v.length,r => r.cause);
+    const fullCounts = d3.rollup(groups[key],v => v.length,r => byId.get(r[0]).cause);
+    const leaders = [...causeOrder].sort((a,b) => (fullCounts.get(b)||0)-(fullCounts.get(a)||0)).slice(0,2).map(cause => ({cause,count:counts.get(cause)||0}));
+    const copy = {
+      departure:['Two causes stand out at takeoff.','Human factor and technical failures account for most departure crashes.'],
+      in_flight:['Human factor pulls ahead.','Technical failures remain the second-largest recorded cause.'],
+      arrival:['The gap widens on arrival.','Over half of arrival crashes are classified as human factor.'],
+      unresolved:['Half have no recorded cause.','Ground and missing-phase records sit outside the airborne sequence.'],
+      ordered:['Human factor leads across the flight.','Technical failures come next among the recorded causes.'],
+      later:['The later phases carry more human-factor records.','Arrival accounts for most of these crashes.'],
+    }[key];
+    if (commentaryKey !== `${selected}:${key}`) {
+      commentaryKey = `${selected}:${key}`;
+      root.querySelector('[data-phase-label]').textContent = `${selected === 'all' ? String(revealStage+1).padStart(2,'0')+' / ' : ''}${phaseLabels[key] || phaseNames[key]}`;
+      root.querySelector('[data-phase-takeaway]').textContent = copy[0];
+      root.querySelector('[data-phase-explanation]').textContent = copy[1];
+    }
+    const rowsEl = d3.select(root.querySelector('.phase-cause-leaders')).selectAll('div').data(leaders,d => d.cause).join('div').attr('class','phase-cause-leader');
+    rowsEl.each(function(d) {
+      const el = d3.select(this);
+      el.selectAll('span').data([displayLabels[d.cause]]).join('span').text(v => v).style('--leader-color',causeColors[d.cause]);
+      el.selectAll('strong').data([d.count]).join('strong').text(format);
+    });
+    root.querySelector('.phase-commentary-total').textContent = `${format(rows.length)} ${phaseLabels[key]?.toLowerCase() || 'selected'} crashes`;
+    root.commentary = { phase:key,recordIds:rows.map(r => r.source_id),causeCounts:Object.fromEntries(counts),leaders };
+  }
+  function renderRevealControls() {
+    root.dataset.revealStage = String(revealStage); root.dataset.revealProgress = String(revealProgress); root.dataset.playback = playback.status;
+    const status = playback.status;
+    const key = `${revealStage}:${status}:${revealProgress>=phases.length}`;
+    if (navigationKey !== key) { navigationKey=key; container.dispatchEvent(new CustomEvent('storybeat',{bubbles:true})); }
+    const button = root.querySelector('[data-flight-pause]');
+    button.textContent = status === 'running' || status === 'waiting' ? 'Pause' : 'Resume'; button.disabled = status === 'complete';
+    root.querySelector('[data-flight-show-all]').disabled = revealProgress >= phases.length;
+    root.querySelector('.flight-reveal-status').textContent = `${format(revealedIds.size)} / ${format(records.length)} crashes${status === 'paused' ? ' · paused' : ''}`;
+  }
+  function renderReveal() {
+    if (destroyed) return;
+    renderRevealControls();
+    if (active) { draw(); renderArea(); announce(false); }
+  }
+  function stopReveal() { d3.select(root).interrupt('phase-reveal'); running = false; }
+  function playReveal() {
+    if (!active || document.hidden || revealProgress >= revealStage+1) return;
+    running = true; renderRevealControls();
+    const start = revealProgress, end = revealStage+1;
+    if (reduced.matches) { revealProgress = end; rebuildMembership(); renderReveal(); running = false; playback.settled(); return; }
+    lastPaint = -Infinity;
+    d3.select(root).transition('phase-reveal').duration((end-start)*motion.durations[revealStage]).ease(d3.easeLinear)
+      .tween('phase-records',() => t => {
+        revealProgress = start+(end-start)*t;
+        if (d3.now()-lastPaint >= 80 || t === 1) { lastPaint = d3.now(); rebuildMembership(); renderReveal(); }
+      }).on('end',() => { running = false; playback.settled(); });
+  }
+  function advanceReveal() { if (revealStage >= phases.length-1) return; revealStage++; playReveal(); }
+  function showAll() { stopReveal(); revealStage = phases.length-1; revealProgress = phases.length; rebuildMembership(); renderReveal(); }
+  const playback = createBeatPlayback({
+    state:() => ({running,complete:revealProgress >= phases.length,atBoundary:revealProgress >= revealStage+1}),
+    play:playReveal,pause:stopReveal,advance:advanceReveal,holdMs:() => motion.holds[revealStage],reduced,showAll,changed:renderRevealControls,
+  });
+  root.querySelector('[data-flight-pause]').addEventListener('click',() => playback.togglePause());
+  root.querySelector('[data-flight-replay]').addEventListener('click',() => { playback.engage(); stopReveal(); revealStage=0; revealProgress=0; selected='all'; cell=null; rebuildMembership(); renderReveal(); playReveal(); });
+  root.querySelector('[data-flight-show-all]').addEventListener('click',() => { playback.hold(); showAll(); });
+  root.querySelector('.source-inspector').addEventListener('toggle',() => { if (root.querySelector('.source-inspector').open) { playback.hold(); renderArea(); } });
 
   for (const cause of causeOrder) {
     const b = document.createElement("button");
@@ -734,6 +666,7 @@ export async function mountFlightExploration(container) {
     sw.style.background = causeColors[cause];
     b.append(sw, document.createTextNode(displayLabels[cause]));
     b.addEventListener("click", () => {
+      playback.hold();
       cell = cell?.cause === cause && cell?.binStart == null ? null : { cause };
       update(true);
       renderArea();
@@ -754,9 +687,10 @@ export async function mountFlightExploration(container) {
     b.addEventListener("click", () => choose(k));
   });
   root.querySelector(".cohort-caption").textContent =
-    `${format(records.length)} archive records · Scheduled Revenue Flight · 1970–2024 · Ribbon width = records`;
+    `Scheduled revenue flights · Worldwide archive · 1970–2024`;
   root.querySelectorAll("[data-measure]").forEach((b) =>
     b.addEventListener("click", () => {
+      playback.hold();
       measure = b.dataset.measure;
       root.querySelector(".area-detail").textContent = "";
       renderArea();
@@ -786,6 +720,7 @@ export async function mountFlightExploration(container) {
       });
   });
   function clearSelection() {
+    playback.hold(); showAll();
     selected = "all";
     cell = null;
     root.querySelector(".area-detail").textContent = "";
@@ -812,26 +747,30 @@ export async function mountFlightExploration(container) {
   }
   window.addEventListener("themechange", onTheme);
   reduced.addEventListener("change", onMotion);
+  rebuildMembership();
   announce(false);
   return {
     resize() {
       draw();
       renderArea();
     },
+    setPlaybackMode:value => playback.setMode(value),
+    finishBeat() { playback.engage(); stopReveal(); revealProgress=revealStage+1; rebuildMembership(); renderReveal(); playback.settled(); },
+    getNavigationState() { return { step:revealStage+1,total:phases.length,running,inProgress:revealProgress>revealStage && revealProgress<revealStage+1,action:revealProgress>=phases.length ? 'Continue the story' : `Reveal ${phaseLabels[phases[revealStage]]}` }; },
+    nextBeat() { if (revealProgress>=phases.length) return false; playback.engage(); if (revealProgress<revealStage+1) playReveal(); else advanceReveal(); return true; },
+    previousBeat() {
+      if (!revealProgress) return false;
+      playback.hold(); if (revealStage>0) { revealStage--; revealProgress=revealStage+1; } else revealProgress=0;
+      selected='all'; cell=null; rebuildMembership(); renderReveal(); return true;
+    },
     setActive(value) {
-      if (active === value) return;
-      active = value;
-      if (!active) {
-        svg.selectAll("*").interrupt();
-        reactRoot.render(null);
-        return;
-      }
-      hasRenderedArea = false;
-      draw();
-      renderArea();
-      announce(false);
+      if (active===value) return;
+      active=value; playback.setActive(value);
+      if (!active) { svg.selectAll('*').interrupt(); reactRoot.render(null); return; }
+      hasRenderedArea=false; draw(); renderArea(); announce(false);
     },
     destroy() {
+      playback.destroy();
       destroyed = true;
       observer.disconnect();
       window.removeEventListener("themechange", onTheme);
