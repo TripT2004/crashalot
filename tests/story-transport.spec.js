@@ -42,8 +42,10 @@ test('Next stays fixed while settling running and paused scale beats; routes pre
   await page.locator('[data-story-back]').click(); // Return to the scale.
   await expect(page).toHaveURL(/change-over-time$/);
   expect(await scaleValues(page)).toEqual(totals);
-  await page.locator('[data-stage=inspect]').click();
-  await page.locator('[data-stage=notice]').click();
+  await page.evaluate(() => { location.hash = '/flight-phase'; });
+  await expect(page.locator('#flight-phase')).toHaveClass(/present/);
+  await page.evaluate(() => { location.hash = '/change-over-time'; });
+  await expect(page.locator('#change-over-time')).toHaveClass(/present/);
   expect(await scaleValues(page)).toEqual(totals);
   await page.locator('.scale-comparison__transport button', { hasText: 'Replay' }).click();
   expect(await scaleValues(page)).toEqual([0, 0]);

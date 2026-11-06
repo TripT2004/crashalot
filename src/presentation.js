@@ -146,12 +146,6 @@ function updateChrome() {
   const index = presentation.getIndices().h;
   document.body.classList.toggle('presentation-cover', index === 0);
   document.body.classList.toggle('presentation-hook', presentation.getCurrentSlide()?.id === 'flight-1282');
-  const slideId = presentation.getCurrentSlide()?.id;
-  const stage = ['flight-phase', 'arrival'].includes(slideId) ? 'inspect' : ['another-perspective', 'the-whole-picture'].includes(slideId) ? 'reconsider' : 'notice';
-  document.querySelectorAll('[data-stage]').forEach(link => {
-    if (link.dataset.stage === stage) link.setAttribute('aria-current', 'step');
-    else link.removeAttribute('aria-current');
-  });
   chartInstances.forEach(chart => {
     chart.resize?.();
     chart.setActive?.(chart.slide === presentation.getCurrentSlide());
