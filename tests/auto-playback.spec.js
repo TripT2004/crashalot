@@ -54,9 +54,9 @@ test('Auto defaults on, uses brief comparison holds and completes the scale with
 test('decades run naturally through the line morph, then wait indefinitely for Next', async ({ page }) => {
   await frozen(page, 'counts-in-context');
   const root = page.locator('.decade-trend');
-  await page.clock.runFor(12000);
+  await page.clock.runFor(25000);
   await expect(root).toHaveAttribute('data-playback', 'complete');
-  await expect(root).toHaveAttribute('data-progress', '10');
+  await expect(root).toHaveAttribute('data-progress', '11');
   await expect(root.locator('.decade-trend__partial-line')).toHaveAttribute('opacity', '1');
   await expect(root.locator('.decade-trend__partial-point')).toHaveAttribute('opacity', '1');
   await page.clock.fastForward(60000);
@@ -68,59 +68,52 @@ test('decades run naturally through the line morph, then wait indefinitely for N
 test('Pause, manual mode, Back and Replay retain control over automatic reveals', async ({ page }) => {
   await frozen(page, 'counts-in-context');
   const root = page.locator('.decade-trend');
-  await page.clock.runFor(500);
-  await root.getByRole('button', { name:'Pause', exact:true }).click();
-  const progress = await root.getAttribute('data-progress');
-  await page.clock.runFor(5000);
-  await expect(root).toHaveAttribute('data-progress', progress);
-  await root.getByRole('button', { name:'Resume', exact:true }).click();
-  await page.clock.runFor(300);
-  expect(await root.getAttribute('data-progress')).not.toBe(progress);
-  await next(page).click(); // Settle this reveal and queue the next one.
-  await expect(root).toHaveAttribute('data-playback', 'waiting');
-  await page.locator('#playback-toggle').click(); // Manual cancels the queue.
-  await page.clock.runFor(5000);
-  await expect(root).toHaveAttribute('data-stage', '0');
-  await expect(root).toHaveAttribute('data-progress', '3');
-  await next(page).click(); await page.clock.runFor(200); await next(page).click();
-  await expect(root).toHaveAttribute('data-stage', '1');
-  await page.locator('[data-story-back]').click();
-  await page.clock.runFor(5000);
-  await expect(root).toHaveAttribute('data-stage', '0');
+  await page.clock.runFor(3000);
+  await expect(root).toHaveAttribute('data-beat','1.5');
+  await root.getByRole('button',{name:'Pause',exact:true}).click();
+  const progress=await root.getAttribute('data-progress');
+  await page.clock.runFor(5000);await expect(root).toHaveAttribute('data-progress',progress);
+  await root.getByRole('button',{name:'Resume',exact:true}).click();
+  await page.clock.runFor(300);expect(await root.getAttribute('data-progress')).not.toBe(progress);
+  await next(page).click();
+  await expect(root).toHaveAttribute('data-playback','waiting');
   await page.locator('#playback-toggle').click();
-  await page.clock.runFor(350);
-  await expect(root).toHaveAttribute('data-stage', '1');
-  await root.getByRole('button', { name:'Replay', exact:true }).click();
-  await expect(root).toHaveAttribute('data-stage', '0');
-  await expect(root).toHaveAttribute('data-playback', 'running');
+  await page.clock.runFor(5000);await expect(root).toHaveAttribute('data-beat','1.5');
+  await expect(root).toHaveAttribute('data-progress','3');
+  await next(page).click();await expect(root).toHaveAttribute('data-beat','2');
+  await page.locator('[data-story-back]').click();
+  await page.clock.runFor(5000);await expect(root).toHaveAttribute('data-beat','1.5');
+  await page.locator('#playback-toggle').click();
+  await page.clock.runFor(300);await expect(root).toHaveAttribute('data-beat','2');
+  await root.getByRole('button',{name:'Replay',exact:true}).click();
+  await expect(root).toHaveAttribute('data-beat','0');
+  await expect(root).toHaveAttribute('data-playback','waiting');
 });
 
-test('leaving a slide or hiding a tab cancels pending work and resumes without skipping beats', async ({ page }) => {
-  await frozen(page, 'counts-in-context');
-  const root = page.locator('.decade-trend');
-  await next(page).click();
-  await page.evaluate(() => { location.hash = '/another-perspective'; });
-  await page.clock.runFor(10000);
-  await expect(root).toHaveAttribute('data-stage', '0');
-  await page.evaluate(() => { location.hash = '/counts-in-context'; });
-  await expect(root).toHaveAttribute('data-playback', 'waiting');
-  const visibility = async hidden => page.evaluate(hidden => {
-    Object.defineProperty(document, 'hidden', { configurable:true, get:() => hidden });
+test('leaving a slide or hiding a tab suspends decade motion and its pending cues', async ({ page }) => {
+  await frozen(page,'counts-in-context');
+  const root=page.locator('.decade-trend');
+  await page.clock.runFor(3000);
+  await page.evaluate(()=>{location.hash='/another-perspective';});
+  await expect(page.locator('#another-perspective')).toHaveClass(/present/);
+  const away=await root.getAttribute('data-progress');
+  await page.clock.runFor(10000);await expect(root).toHaveAttribute('data-progress',away);
+  await page.evaluate(()=>{location.hash='/counts-in-context';});
+  await expect(root).toHaveAttribute('data-playback','running');
+  const visibility=hidden=>page.evaluate(hidden=>{
+    Object.defineProperty(document,'hidden',{configurable:true,get:()=>hidden});
     document.dispatchEvent(new Event('visibilitychange'));
-  }, hidden);
+  },hidden);
   await visibility(true);
-  await page.clock.runFor(5000);
-  await expect(root).toHaveAttribute('data-stage', '0');
-  await visibility(false);
-  await page.clock.runFor(350);
-  await expect(root).toHaveAttribute('data-stage', '1');
-  const progress = await root.getAttribute('data-progress');
-  await visibility(true);
-  await page.clock.runFor(5000);
-  await expect(root).toHaveAttribute('data-progress', progress);
-  await visibility(false);
-  await page.clock.runFor(200);
-  expect(await root.getAttribute('data-progress')).not.toBe(progress);
+  const held=await root.getAttribute('data-progress');
+  await page.clock.runFor(5000);await expect(root).toHaveAttribute('data-progress',held);
+  await visibility(false);await page.clock.runFor(200);
+  expect(await root.getAttribute('data-progress')).not.toBe(held);
+  await next(page).click();await expect(root).toHaveAttribute('data-playback','waiting');
+  await visibility(true);await page.clock.runFor(5000);
+  await expect(root).toHaveAttribute('data-beat','1.5');
+  await visibility(false);await page.clock.runFor(300);
+  await expect(root).toHaveAttribute('data-beat','2');
 });
 
 test('opening Auto reveals only fragments, and Back holds the reader’s chosen fragment', async ({ page }) => {

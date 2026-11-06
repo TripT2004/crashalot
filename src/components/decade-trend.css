@@ -28,3 +28,29 @@
 .decade-trend--narrow .decade-trend__partial{font-size:10px}
 
 @media(max-width:360px){.decade-trend--narrow .decade-trend__value{font-size:12px}}
+
+/* Text cues lead the marks; the opening keeps the stage quiet. */
+.decade-trend { --decade-fatal-color:#a67900; }
+[data-bs-theme="dark"] .decade-trend { --decade-fatal-color:#f1ce63; }
+.decade-trend__grid { opacity:0;visibility:hidden;transition:opacity .45s ease,visibility .45s; }
+.decade-trend.has-started .decade-trend__grid { opacity:1;visibility:visible; }
+.trend-scope { opacity:0;visibility:hidden;transition:opacity .45s ease,visibility .45s; }
+.trend-scope.is-visible { opacity:1;visibility:visible; }
+.decade-trend__note { min-height:270px; }
+.decade-trend__note h2 { transition:opacity .35s ease; }
+.decade-trend__note>p:not(.eyebrow) { display:none; }
+.decade-trend__note>p.is-visible { display:block;animation:decade-copy-in .45s ease both; }
+.decade-trend__note>p.is-visible+p.is-visible { margin-top:18px; }
+.decade-trend__note>p.decade-trend__fatal-copy { font:400 25px/1.3 Georgia,serif;letter-spacing:-.025em; }
+.decade-trend__legend { display:flex;flex-wrap:wrap;gap:10px 22px;min-height:22px;align-items:center;font-size:12px;opacity:0;visibility:hidden;transition:opacity .4s ease,visibility .4s; }
+.decade-trend__legend.is-visible { opacity:1;visibility:visible; }
+.decade-trend__legend span { display:inline-flex;align-items:center;gap:8px; }
+.decade-trend__legend span::before { content:'';display:inline-block;width:24px;border-top:3px solid var(--viz-series-1); }
+.decade-trend__legend .decade-trend__legend-fatal::before { border-color:var(--decade-fatal-color); }
+.decade-trend__fatal-value { fill:var(--decade-fatal-color);font:600 16px var(--bs-font-sans-serif);font-variant-numeric:tabular-nums; }
+.decade-trend--narrow .decade-trend__fatal-value { font-size:12px; }
+@keyframes decade-copy-in { from {opacity:0} to {opacity:1} }
+@media(max-width:700px) { .decade-trend__note{min-height:0}.decade-trend__legend{font-size:11px;gap:8px 14px}.decade-trend__note>p.decade-trend__fatal-copy{font-size:24px} }
+@media(prefers-reduced-motion:reduce) { .decade-trend__grid,.trend-scope,.decade-trend__legend{transition:none}.decade-trend__note>p.is-visible{animation:none} }
+.decade-trend__note h2.decade-heading-enter { animation:decade-copy-in .45s ease both; }
+@media(prefers-reduced-motion:reduce) { .decade-trend__note h2.decade-heading-enter{animation:none} }

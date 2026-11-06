@@ -67,3 +67,19 @@ Playback verification covers natural completion, short boundary holds, stable na
 The yellow series counts retained records with `total_fatalities > 0`, using exactly the same worldwide Scheduled Revenue Flight category, 1950–2024 interval, source checksum and unique IDs as the total series. An ad hoc Polars aggregation reconciled all annual and decade totals before adding `fatalCount` to both JSON row sets. All 4,328 IDs are unique; no selected record has a missing or negative `total_fatalities` value. This is source-field completeness, not independent verification of every underlying accident report.
 
 Fatal counts by bin: 402, 415, 475, 340, 304, 152, 98, 22. They sum to 2,208. Fatal crashes declined 79.37% from the 1970s to the 2010s (1 − 98/475). They are 36.43% of recorded crashes in the 2010s and 50% of records in the five-year 2020–2024 bin. Consequently the proposed “fatal ones are minuscule” copy is replaced by “Fatal crashes fell even further.” The two lines retain the same zero-based count scale and the partial-decade treatment.
+
+## Authored fourth-slide cues — November 6, 2026
+
+The user’s 0 / 1 / 1.5 / 2 / 2.5 / 3 / 3.5 / 4 / 4.5 / 5 / 5.5 sequence now separates all text and chart actions. Beat 0 leaves the title alone above a reserved stage. Beat 1 introduces the opening explanation; 1.5 grows 1950s–1970s bars; 2 pauses. Beat 2.5 introduces the technology heading; 3 adds its sentence and the remaining bars, including the explicitly partial 2020–2024 bin. Beat 3.5 adds the 71% decline. Beat 4 draws the total line while bars remain; 4.5 removes the bars while technology copy stays. Beat 5 introduces “These are total crashes,” with italic emphasis. Beat 5.5 draws the fatal line and shows both legend entries. The rejected historical-context sentence is removed from the main story; the source drawer retains attribution and interpretation limits.
+
+D3 owns the existing bar, line and fade interpolation. Text changes fade as whole phrases. Auto holds are content-specific and remains slide-local; Back, Replay, Pause, visibility changes and reduced motion retain their shared transport behavior. Both series have dashed final segments and hollow partial-decade endpoints. The fatal series uses a gold/yellow tone with theme-specific contrast and exact count labels on the existing zero-based scale.
+
+### Technology candidates reported for review, not added as new annotations
+
+- 1975: GPWS required on large U.S. commercial aircraft. [FAA accident lessons](https://www.faa.gov/lessons_learned/transport_airplane/accidents/F-GGED).
+- 1981: United introduces formal CRM training following NASA’s 1979 workshop. [FAA accident lessons](https://www.faa.gov/lessons_learned/transport_airplane/accidents/N8082U).
+- 1993: TCAS II U.S. installation deadline, extended to December 30, for affected airliners with more than 30 passenger seats. [FAA historical perspective, chapter 6](https://www.faa.gov/sites/faa.gov/files/about/history/historical_perspective/historical_perspective_ch6.pdf).
+- 1994: Predictive windshear systems enter commercial service. [FAA accident lessons](https://www.faa.gov/lessons_learned/transport_airplane/accidents/N726DA).
+- 1996: Honeywell introduces enhanced GPWS with forward-looking terrain alerts. [Honeywell technology history](https://www.honeywellaerospace.com/us/en/insights/articles/five-times-honeywell-was-first-in-safety-innovation).
+
+Dates refer to specified introductions or U.S. requirements, not universal worldwide fleet adoption. The user asked to review candidates first; no new chart annotations have been added.
