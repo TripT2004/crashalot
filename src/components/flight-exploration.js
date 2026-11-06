@@ -49,16 +49,16 @@ export async function mountFlightExploration(container) {
 
   const phaseLabels = { departure:'Departure', in_flight:'In flight', arrival:'Arrival' };
   const beats = [
-    { label:'0', end:0, hold:850 },
-    { label:'1', end:0, hold:2200 },
-    { label:'1.5', phase:'departure', end:1, duration:2100, hold:250 },
-    { label:'2', phase:'departure', causes:true, end:1, hold:2200 },
-    { label:'2.5', phase:'in_flight', end:1, hold:950 },
-    { label:'3', phase:'in_flight', end:2, duration:2100, hold:250 },
-    { label:'3.5', phase:'in_flight', causes:true, end:2, hold:2200 },
-    { label:'4', phase:'arrival', end:2, hold:1050 },
-    { label:'4.5', phase:'arrival', end:3, duration:2600, hold:300 },
-    { label:'5', phase:'arrival', causes:true, end:3, hold:2500 },
+    { label:'0', end:0, hold:1100 },
+    { label:'1', end:0, hold:3200 },
+    { label:'1.5', phase:'departure', end:1, duration:2100, hold:650 },
+    { label:'2', phase:'departure', causes:true, end:1, hold:3400 },
+    { label:'2.5', phase:'in_flight', end:1, hold:1700 },
+    { label:'3', phase:'in_flight', end:2, duration:2100, hold:650 },
+    { label:'3.5', phase:'in_flight', causes:true, end:2, hold:3400 },
+    { label:'4', phase:'arrival', end:2, hold:1800 },
+    { label:'4.5', phase:'arrival', end:3, duration:2600, hold:700 },
+    { label:'5', phase:'arrival', causes:true, end:3, hold:3800 },
     { label:'5.5', end:3, hold:0 },
   ];
   const scene = () => beats[revealStage];

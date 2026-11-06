@@ -102,7 +102,7 @@ test('natural Auto completion, Pause/Resume, Back and Replay retain linked data'
   const source=await(await request.get('/data/flight-exploration.json')).json();
   await openFrozen(page);
   const root=page.locator('.flight-exploration');
-  await page.clock.runFor(3500);
+  await page.clock.runFor(4800);
   await page.locator('[data-flight-pause]').click();
   const held=(await snapshot(page)).reveal.recordIds;
   expect(held.length).toBeGreaterThan(0);expect(held.length).toBeLessThan(610);
@@ -117,7 +117,7 @@ test('natural Auto completion, Pause/Resume, Back and Replay retain linked data'
   await page.clock.runFor(10000);expect((await snapshot(page)).reveal.recordIds).toEqual(back.reveal.recordIds);
   await page.locator('[data-flight-replay]').click();
   await expect(root).toHaveAttribute('data-story-beat','0');
-  await page.clock.runFor(4000);
+  await page.clock.runFor(5200);
   const replay=await snapshot(page);verifyIdentity(replay,source);expect(replay.reveal.recordIds.length).toBeGreaterThan(0);expect(replay.reveal.recordIds.length).toBeLessThan(610);
 });
 
