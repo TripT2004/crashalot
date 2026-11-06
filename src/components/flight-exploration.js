@@ -23,12 +23,10 @@ export async function mountFlightExploration(container) {
     Object.fromEntries(data.columns.map((c, i) => [c, row[i]])),
   );
   const byId = new Map(meta.map((r) => [r.source_id, r]));
-  const records = meta.map((r) => [
-    r.source_id,
-    ["departure", "in_flight", "arrival"].includes(r.phase)
-      ? r.phase
-      : "unresolved",
-  ]);
+  const phases = ['departure','in_flight','arrival'];
+  // Retain canonical metadata, but plot only records with a known airborne phase.
+  const records = meta.filter(r=>phases.includes(r.phase)).map(r=>[r.source_id,r.phase]);
+  root.dataset.excludedPhaseCount=String(meta.length-records.length);
   const phaseNames = {
     all: "All records",
     ordered: "Known airborne phase",
@@ -36,22 +34,20 @@ export async function mountFlightExploration(container) {
     arrival: "Crash during arrival",
     departure: "Crash during departure",
     in_flight: "Crash in flight",
-    unresolved: "Ground / unknown",
   };
   const groups = {
     all: records,
-    ordered: records.filter((r) => r[1] !== "unresolved"),
+    ordered: records,
     later: records.filter((r) => ["in_flight", "arrival"].includes(r[1])),
     ...Object.fromEntries(
-      ["departure", "in_flight", "arrival", "unresolved"].map((k) => [
+      ["departure", "in_flight", "arrival"].map((k) => [
         k,
         records.filter((r) => r[1] === k),
       ]),
     ),
   };
 
-  const phases = ['departure', 'in_flight', 'arrival', 'unresolved'];
-  const phaseLabels = { departure:'Departure', in_flight:'In flight', arrival:'Arrival', unresolved:'Ground / unknown' };
+  const phaseLabels = { departure:'Departure', in_flight:'In flight', arrival:'Arrival' };
   const beats = [
     { label:'0', end:0, hold:850 },
     { label:'1', end:0, hold:2200 },
@@ -63,8 +59,7 @@ export async function mountFlightExploration(container) {
     { label:'4', phase:'arrival', end:2, hold:1050 },
     { label:'4.5', phase:'arrival', end:3, duration:2600, hold:300 },
     { label:'5', phase:'arrival', causes:true, end:3, hold:2500 },
-    { label:'5.5', phase:'unresolved', end:4, duration:1100, hold:1700 },
-    { label:'6', end:4, hold:0 },
+    { label:'5.5', end:3, hold:0 },
   ];
   const scene = () => beats[revealStage];
   const complete = () => revealStage===beats.length-1 && revealProgress>=phases.length;
@@ -98,12 +93,7 @@ export async function mountFlightExploration(container) {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)");
   const svg = d3.select(root.querySelector(".flight-flow"));
   let graph, unit, vertical, width, overlay, linkPath, flowBands = [];
-  const color = (d) =>
-    d.key === "unresolved"
-      ? "var(--muted-foreground)"
-      : d.outcome
-        ? "var(--viz-series-2)"
-        : "var(--viz-series-1)";
+  const color = d => d.outcome ? "var(--viz-series-2)" : "var(--viz-series-1)";
   const identity = (id) =>
     `${data.source.dataset}@${data.source.revision}:${id}`;
   const causeOrder = data.rules.area_display.causes;
@@ -153,6 +143,7 @@ export async function mountFlightExploration(container) {
       recordIds: ids,
       revealedRecordIds: members('all').map(([id]) => id),
       revealPhase: scene().phase || null,
+      phaseFilter: [...phases],
       recordKeys: ids.map(identity),
       denominatorRecordIds,
     };
@@ -525,15 +516,15 @@ export async function mountFlightExploration(container) {
     unit = (vertical ? Math.min(95, width * .29) : 90) / records.length;
     const end = vertical ? 560 : W - 18;
     const xs = vertical ? [52,172,292,412] : [16,W*.245,W*.49,W*.735];
-    const yMain = vertical ? 18 : 58, ySink = vertical ? width - 110 : 150, yUnknown = vertical ? width - 52 : 235;
+    const yMain = vertical ? 18 : 58, ySink = vertical ? width - 110 : 150;
     const specs = [
       ['all',xs[0],yMain], ['ordered',xs[1],yMain], ['later',xs[2],yMain],
-      ['arrival',xs[3],yMain], ['crash',end,ySink], ['unresolved',xs[1],yUnknown],
+      ['arrival',xs[3],yMain], ['crash',end,ySink],
     ];
     const nodes = specs.map(([id,x,y]) => ({ id,x0:x,x1:x+7,y0:y,sourceLinks:[],targetLinks:[] }));
     const nodeMap = new Map(nodes.map(node => [node.id,node]));
     const links = [
-      ['all','ordered','ordered',0], ['all','unresolved','unresolved',1],
+      ['all','ordered','ordered',0],
       ['ordered','later','later',0], ['ordered','crash','departure',3,true],
       ['later','arrival','arrival',0], ['later','crash','in_flight',2,true],
       ['arrival','crash','arrival',1,true],
@@ -559,7 +550,7 @@ export async function mountFlightExploration(container) {
     // never thickness or the positions of already-drawn phase bands.
     const bands = links.flatMap(link => {
       let offset = 0;
-      return ['arrival','in_flight','departure','unresolved'].flatMap(terminal => {
+      return ['arrival','in_flight','departure'].flatMap(terminal => {
         if (!groups[link.key].some(r => r[1] === terminal)) return [];
         const shift = (-link.value / 2 + offset + groups[terminal].length / 2) * unit;
         const band = { link,terminal,bandOffset:offset,
@@ -577,7 +568,7 @@ export async function mountFlightExploration(container) {
     base.each(function(d) { d.length = this.getTotalLength(); });
     // Each phase travels from the source through consecutive links to its sink.
     // Normalized dashes follow the actual curved path, including the mobile layout.
-    for (const terminal of ['departure','in_flight','arrival','unresolved']) {
+    for (const terminal of phases) {
       const route = bands.filter(d => d.terminal === terminal).sort((a,b) => a.link.source.x0-b.link.source.x0);
       const total = d3.sum(route,d => d.length);
       let offset = 0;
@@ -610,18 +601,16 @@ export async function mountFlightExploration(container) {
     if (!vertical) {
       add('all',16,22,'Crashes',format(revealedIds.size));
       add('departure',xs[1],22,'Departure'); add('in_flight',xs[2],22,'In flight'); add('arrival',xs[3],22,'Arrival');
-      add('unresolved',xs[1]+14,yUnknown-7,`Ground / unknown · ${format(members('unresolved').length)}`);
       add('dep-count',xs[1]+14,165,format(members('departure').length));
       add('flight-count',xs[2]+14,179,format(members('in_flight').length));
       add('arrival-count',width-18,116,format(members('arrival').length),'','end');
     } else {
       const tx = Math.min(width-142,130);
       add('all',tx,47,'Crashes',format(revealedIds.size));
-      add('departure',tx,167,'Departure',format(members('departure').length));
-      add('in_flight',tx,287,'In flight',format(members('in_flight').length));
-      add('arrival',tx,407,'Arrival',format(members('arrival').length));
+      add('departure',tx,167,'Departure',members('departure').length ? format(members('departure').length) : '');
+      add('in_flight',tx,287,'In flight',members('in_flight').length ? format(members('in_flight').length) : '');
+      add('arrival',tx,407,'Arrival',members('arrival').length ? format(members('arrival').length) : '');
       add('known',width-16,600,`${format(members('ordered').length)} airborne-phase crashes`,'','end');
-      add('unresolved',width-12,143,'Ground /',`unknown · ${format(members('unresolved').length)}`,'end');
     }
     const text = svg.selectAll('text.flow-label').data(labels,d => d.key).join('text').attr('class','flow-label')
       .attr('x',d => d.x).attr('y',d => d.y).attr('text-anchor',d => d.anchor);
@@ -671,26 +660,23 @@ export async function mountFlightExploration(container) {
       departure:['Human factor and technical failures lead.','Together, they account for 396 of the 610 departure crashes.'],
       in_flight:['Human factor leads in flight.','Technical failures are the second-largest recorded cause.'],
       arrival:['Human factor stands out on arrival.','It accounts for 859 of 1,527 arrival crashes—over half.'],
-      unresolved:['Keep these records separate.','Ground records and missing phases sit outside the airborne sequence.'],
       ordered:['Human factor leads across the flight.','Technical failures come next among the recorded causes.'],
       later:['Arrival accounts for most of this group.','Human factor is the leading recorded cause across these later phases.'],
     }[key];
     let title=phaseCopy[0], explanation=phaseCopy[1], label=phaseLabels[key] || phaseNames[key];
     if(selected==='all') {
       if(revealStage<=1) {
-        label='How to read this';title='Follow the crash records.';
-        explanation='Wider ribbons mean more recorded crashes. Each branch groups crashes by their recorded flight phase.';
+        label='Recorded airborne phases';title='Three broad phases.';
+        explanation='Departure, in flight, arrival. Wider ribbons represent more recorded crashes.';
       } else if(revealStage===2) {
-        title='First, departure.';explanation='Watch the Departure branch: takeoff and climb enter together.';
+        title='First, departure.';explanation=`About ${Math.round(groups.departure.length/records.length*100)}% of these crashes were recorded during takeoff or climb.`;
       } else if(revealStage===4 || revealStage===5) {
-        title='Now follow the in-flight branch.';explanation='The departure records stay in view as the next group joins them.';
+        title='Then, in flight.';explanation=`About ${Math.round(groups.in_flight.length/records.length*100)}% were recorded in flight.`;
       } else if(revealStage===7 || revealStage===8) {
-        title='Next, watch arrival.';explanation='Descent, approach and landing join the same flow.';
-      } else if(revealStage===10) {
-        title='A small branch sits outside the flight.';explanation='82 records occurred on the ground; 62 have no recorded phase.';
+        title='Finally, arrival.';explanation=`About ${Math.round(groups.arrival.length/records.length*100)}% were recorded during descent, approach or landing.`;
       } else if(complete()) {
-        label='The full view';title='Arrival is the largest group.';
-        explanation='1,527 of 2,792 crashes with a known airborne phase were recorded during arrival. Choose a phase below to compare its causes.';
+        label='The full view';title='Arrival accounts for over half.';
+        explanation='1,527 of 2,792 recorded airborne-phase crashes were during arrival. The phase filters below show how their causes differ.';
       }
     }
     const nextKey = `${selected}:${revealStage}:${key}`;
@@ -711,11 +697,8 @@ export async function mountFlightExploration(container) {
       el.selectAll('strong').data([d.count]).join('strong').text(format);
     });
     root.querySelector('.phase-commentary-total').textContent=causesVisible ? `${format(rows.length)} ${phaseLabels[key]?.toLowerCase() || 'selected'} crashes` : '';
-    const summary = selected==='all' && (complete() || revealStage===10)
-      ? (complete() ? ['departure','in_flight','arrival'] : ['ground','unknown']).map(phase=>({
-          phase,label:phaseLabels[phase] || (phase==='ground' ? 'On the ground' : 'Phase not recorded'),
-          count:phase==='ground' || phase==='unknown' ? members('unresolved').filter(([id])=>byId.get(id).phase===phase).length : members(phase).length,
-        })) : [];
+    const summary = selected==='all' && complete()
+      ? phases.map(phase=>({phase,label:phaseLabels[phase],count:members(phase).length})) : [];
     d3.select(root.querySelector('.phase-summary')).selectAll('div').data(summary,d=>d.phase).join('div')
       .attr('class',d=>`phase-summary-row${d.phase==='arrival' ? ' is-emphasized' : ''}`)
       .each(function(d){
@@ -807,13 +790,12 @@ export async function mountFlightExploration(container) {
       departure: "Departure",
       in_flight: "In flight",
       arrival: "Arrival",
-      unresolved: "Ground / unknown",
-    };
+      };
     b.textContent = `${short[k]} · ${format(groups[k].length)}`;
     b.addEventListener("click", () => choose(k));
   });
   root.querySelector(".cohort-caption").textContent =
-    `Scheduled revenue flights · Worldwide archive · 1970–2024`;
+    `Worldwide scheduled-revenue archive · 1970–2024 · Recorded airborne phases`;
   root.querySelectorAll("[data-measure]").forEach((b) =>
     b.addEventListener("click", () => {
       playback.hold();

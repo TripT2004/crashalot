@@ -6,13 +6,27 @@ Integrated November 5, 2026. This supersedes the older operation→phase compone
 
 This is now slide 5, immediately after the worldwide decade trend. **Where in a flight do these crashes happen?** narrows the period from 1950–2024 to 1970–2024.
 
-Three cumulative beats add departure, in-flight, then arrival crashes. The right-hand commentary explains the leading recorded causes in the phase being added. Both charts read a shared set of original revealed source IDs; the cause chart accumulates the same phases instead of jumping ahead to the complete dataset. Its four-cause denominator remains unchanged. Phase controls, exact values, and backward cause highlighting retain the existing identity contract.
+The current sequence has eleven cues, separating each flow reveal from its cause explanation:
 
-Each phase draws from the source through its consecutive Sankey links, left to right (top to bottom on mobile). Ribbon widths and positions use the final layout throughout, so completed bands stay still as later phases arrive. A normalized SVG path dash advances along each curved segment in route order; future phase bands and their hit targets remain hidden. The animated partial stroke is a construction state, with the counters and linked cause chart reporting the records introduced so far.
+| Beat | Reading cue / action |
+| --- | --- |
+| 0 | The slide title, with a quiet reserved stage. |
+| 1 | “Three broad phases.” A short width/count reading key. |
+| 1.5 | “First, departure.” About 22% of plotted crashes; departure draws. |
+| 2 | Departure’s leading causes: human factor 215 and technical failure 181. |
+| 2.5 | “Then, in flight.” About 23%; no additional records yet. |
+| 3 | In-flight records draw; departure stays visible with reduced emphasis. |
+| 3.5 | In-flight leading causes: human factor 267 and technical failure 168. |
+| 4 | “Finally, arrival.” About 55%; no additional records yet. |
+| 4.5 | Arrival records draw, preserving earlier geometry. |
+| 5 | Arrival’s human-factor classification accounts for over half of that phase. |
+| 5.5 | “Arrival accounts for over half.” Full phase counts and exploration controls. |
 
-The data reveal grows each cause bucket proportionally within a phase, choosing deterministic prefixes of actual source IDs. It is a visual build, not an asserted chronological order. Counts remain integers and memberships remain real records. All final phase counts and IDs reconcile to the portable source. Ground/missing-phase records are added on completion in their separate branch, outside the airborne phase sequence.
+Both charts use the same 2,792 source IDs with a known airborne phase. The 82 ground records and 62 missing phases are retained in the canonical JSON and source disclosure, but excluded from both plotted charts and the phase-share denominator. The user explicitly removed their branch and filter from the story. Percentages are 610/2,792, 655/2,792, and 1,527/2,792, rounded to 22%, 23%, and 55%.
 
-The timing is 2.1 seconds for departure, 2.1 seconds for in-flight, and 2.6 seconds for arrival, with 280/450 ms breathing holds. The path front updates on each D3 animation frame. A bounded 80 ms data-paint cadence keeps Sankey counts, commentary, and the React cause chart on the same committed membership while avoiding per-frame React remounts. Geometry stays fixed independently of this data cadence. The path treatment uses standard [SVG pathLength and dash scaling](https://developer.mozilla.org/en-US/docs/Web/SVG/Reference/Attribute/pathLength) within the existing [D3 transition timing](https://d3js.org/d3-transition/timing). Auto never changes slides. Pause/Resume, Replay, Next, and Back use the same view-local playback controller as the earlier charts. Back removes later phases from both charts. Reduced-motion Auto shows the complete static view.
+Each phase draws left to right on desktop and top to bottom on mobile through consecutive Sankey links. Widths and node positions use the final plotted cohort throughout, so completed bands stay fixed. Earlier phases remain visible with lower opacity when the next phase is introduced. A bounded 80 ms data paint updates the cause chart and counters from the same committed memberships, while the path front advances on each D3 animation frame. Per-cause deterministic prefixes of original source IDs construct each phase; this is a visual build, not chronological crash order.
+
+The phase motions take 2.1 / 2.1 / 2.6 seconds, with distinct short transition holds and longer text-reading holds. Auto takes about 19.6 seconds and stops on the full view. Headings fade as whole phrases. Phase filters appear when the reveal is complete; Pause, Replay and Show full view remain available during it. Source details preserve interpretation limits without adding them as an extra story beat. The lower cause chart’s membership summary updates during the reveal instead of retaining its initial zero-count message. Next, Back, Manual, tab visibility and reduced motion keep the shared slide-local transport behavior.
 
 Selecting a phase explicitly finishes the reveal, pauses Auto, and focuses the selected cohort in the Sankey, commentary, and cause chart. Cause/period selections, measure changes, or opening source details also pause the reveal for inspection. Show full view provides an explicit skip. Leaving and returning preserves progress and selections. Clear selection or Escape finishes the reveal and resets phase/highlight while preserving the measure.
 
@@ -36,7 +50,7 @@ Human factor plus technical failure account for most departure records (396/610)
 - Dataset: MauroPello/planecrashdata, revision `b817a96f2b9152b735c9c6570d465102f5f76c88`; publisher-declared CC BY 4.0.
 - Locked retained-file SHA-256: `db334ffbab0cf67b06765038803338531fbfe23522c69b453cd8eb63a6c09b48`, from `data/sources.json`.
 - Exact filter: `flight_type == "Scheduled Revenue Flight"`, year ≥ 1970 and < 2025. 2025 is the right boundary, not an included data year. Separate `Passenger - Scheduled` records are not merged.
-- 2,936 distinct original record IDs, dates 1970-01-05 through 2024-12-29. These are archive aircraft-occurrence records, not verified unique incidents or the population of operated flights.
+- 2,936 canonical distinct original record IDs, dates 1970-01-05 through 2024-12-29. These are archive aircraft-occurrence records, not verified unique incidents or the population of operated flights.
 - The retained Parquet and prototype CSV were independently compared during integration: IDs, raw phase, raw cause, and year agree for all 2,936 included records.
 
 | Recorded phase group | Records |
@@ -47,7 +61,7 @@ Human factor plus technical failure account for most departure records (396/610)
 | Ground | 82 |
 | Missing phase | 62 |
 
-Known airborne records (2,792) split into 610 departure and 2,182 later-phase records; those later records split into 655 in flight and 1,527 arrival. A later recorded phase supports the displayed classification sequence; it does not establish successful operation of earlier phases, observed flight trajectories, or a phase-specific probability of crashing.
+The plotted cohort is the 2,792 known-airborne records. They split into 610 departure and 2,182 later-phase records; those later records split into 655 in flight and 1,527 arrival. A later recorded phase supports the displayed classification sequence; it does not establish successful operation of earlier phases, observed flight trajectories, or a phase-specific probability of crashing.
 
 ## AreaBump semantics
 
@@ -55,22 +69,22 @@ Eleven equally spaced five-year periods run from 1970–1974 through 2020–2024
 
 | Displayed cause | Records |
 | --- | ---: |
-| Weather | 153 |
-| Technical | 643 |
-| Human Factor | 1,376 |
-| Intentional Acts | 81 |
+| Weather | 152 |
+| Technical | 620 |
+| Human Factor | 1,341 |
+| Intentional Acts | 68 |
 
-The area view displays 2,253 records. Others (109) and Not Recorded (574) remain in canonical records and the Sankey; their omission from AreaBump is disclosed below it, with counts recalculated for the current phase filter. The source provides broad cause categories, not reviewed engine/systems/structure/maintenance domains.
+The area view displays 2,181 records from the plotted airborne cohort. Others (109) and Not Recorded (502) remain in canonical records and the Sankey; their omission from AreaBump is disclosed below it, with counts recalculated for the current phase filter. The source provides broad cause categories, not reviewed engine/systems/structure/maintenance domains.
 
 Count uses raw records. Percentage divides each displayed cause count by the sum of the four displayed causes in the same phase-selected period. It does not divide by all archive records or flight exposure. Empty periods keep their position and use a zero value; the exact table shows “—” when there is no denominator. When units change, Nivo is remounted to avoid interpolating between incompatible count/share scales; ordinary within-unit selection changes use restrained motion. Reduced-motion users receive immediate changes.
 
 ## Portable source and identity contract
 
-`data/flight-exploration-rules.json` owns the exact filter, maps, period policy, and display/denominator definition. `scripts/build_flight_exploration.py` reads only the retained snapshot, verifies its checksum and unique IDs, fails on unmapped categories, and checks the period partition. It writes the committed `public/data/flight-exploration.json`: source receipt, rules checksum, named projection columns, preserved source IDs/raw labels, normalized fields, and count audit. No HTML embeds a separately edited copy of the data. The presentation loads this JSON locally; React, Nivo, D3, and themes are bundled by Vite, with no chart CDN dependency.
+`data/flight-exploration-rules.json` owns the exact filter, maps, period policy, and display/denominator definition. `scripts/build_flight_exploration.py` reads only the retained snapshot, verifies its checksum and unique IDs, fails on unmapped categories, and checks the period partition. It writes the committed `public/data/flight-exploration.json`: source receipt, rules checksum, named projection columns, preserved source IDs/raw labels, normalized fields, and count audit. The view applies its explicit known-airborne-phase filter to that canonical projection; the JSON retains all 2,936 records. No HTML embeds a separately edited copy of the data. The presentation loads this JSON locally; React, Nivo, D3, and themes are bundled by Vite, with no chart CDN dependency.
 
 Rebuild with `npm run data:flight`; verify without mutation with `uv run python scripts/build_flight_exploration.py --check`. The retained raw file is ignored by Git; a fresh checkout runs the presentation from its committed reviewed JSON. Regeneration requires the matching retained source, not a new unpinned download.
 
-The component’s bubbling `flight-safety:selection` and backward-compatible `flight-phase:select` events contain dataset/revision, filter, period policy, phase cohort, optional cause/period highlight, measure, original string `recordIds`, namespaced snapshot keys, and displayed-cause denominator IDs. Keys are `MauroPello/planecrashdata@REVISION:ID`; they do not assert stability across upstream rewrites. Both charts read the same record projection and recompute memberships from those identities. Display labels and array positions are never join keys.
+The component’s bubbling `flight-safety:selection` and backward-compatible `flight-phase:select` events contain dataset/revision, filter, period policy, phase cohort, optional cause/period highlight, measure, original string `recordIds`, namespaced snapshot keys, and displayed-cause denominator IDs. `phaseFilter` names the three plotted phase groups. Keys are `MauroPello/planecrashdata@REVISION:ID`; they do not assert stability across upstream rewrites. Both charts read the same record projection and recompute memberships from those identities. Display labels and array positions are never join keys.
 
 ## Verification
 

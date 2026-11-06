@@ -23,7 +23,7 @@ test("phase, cause and exact period link by source IDs; measure preserves select
   ).json();
   await chapter(page);
   let s = await state(page);
-  expect(s.selection.recordIds).toHaveLength(2936);
+  expect(s.selection.recordIds).toHaveLength(2792);
   expect(s.area.bins).toHaveLength(11);
   expect(s.area.series.map((x) => x.id)).toEqual([
     "weather",
@@ -31,7 +31,7 @@ test("phase, cause and exact period link by source IDs; measure preserves select
     "human",
     "intentional",
   ]);
-  expect(s.area.cells.reduce((n, c) => n + c.count, 0)).toBe(2253);
+  expect(s.area.cells.reduce((n, c) => n + c.count, 0)).toBe(2181);
   await page.locator('[data-cohort="arrival"]').click();
   await page.locator('.cause-legend [data-cause="technical"]').click();
   s = await state(page);
@@ -100,7 +100,7 @@ test("keyboard chart controls do not advance Reveal; completed exploration retai
   expect((await state(page)).area.measure).toBe("percentage");
   await page.locator('[data-measure="count"]').focus();
   await page.keyboard.press("Escape");
-  expect((await state(page)).selection.recordIds).toHaveLength(2936);
+  expect((await state(page)).selection.recordIds).toHaveLength(2792);
   expect(page.url()).toContain("#/flight-phase");
 });
 

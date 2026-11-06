@@ -33,7 +33,6 @@
     <button type="button" data-cohort="departure">Departure</button>
     <button type="button" data-cohort="in_flight">In flight</button>
     <button type="button" data-cohort="arrival">Arrival</button>
-    <button type="button" data-cohort="unresolved">Ground / unknown</button>
     <button type="button" class="clear-selection" data-clear-selection>
       Clear selection
     </button>
@@ -74,10 +73,12 @@
     <p>
       Worldwide archive · flight_type exactly “Scheduled Revenue Flight” ·
       1970–2024. 2025 is the endpoint and is excluded. This narrows the previous
-      1950–2024 view. The ribbons partition accident records by their recorded
+      1950–2024 view. Both charts show the same 2,792 records with a known airborne
+      phase: departure, in flight, or arrival. The 82 ground records and 62 records
+      without a phase remain in the retained source and are excluded from both
+      plotted charts and their phase-share denominator. The ribbons partition accident records by their recorded
       phase; continuation means the accident was recorded later, not a measured
-      successful flight. Ground and missing phases are not forced into a flight
-      sequence.
+      successful flight.
     </p>
     <p>
       The four causes are the archive’s broad classifications, not reviewed
