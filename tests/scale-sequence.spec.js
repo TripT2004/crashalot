@@ -1,0 +1,153 @@
+import {test,expect} from '@playwright/test';
+const next=p=>p.locator('[data-story-next]');
+const root=p=>p.locator('.scale-comparison');
+const values=p=>root(p).locator('.scale-comparison__value').evaluateAll(ns=>ns.map(n=>Number(n.dataset.value)));
+async function frozen(page,auto=false) {
+  await page.clock.install({time:new Date('2026-11-06T12:00:00Z')});
+  await page.goto('/#/another-perspective');
+  await page.locator('.decade-trend').waitFor({state:'attached'});
+  await page.clock.pauseAt(new Date('2026-11-06T12:01:00Z'));
+  if(!auto)await page.locator('#playback-toggle').click();
+  await page.evaluate(()=>location.hash='/change-over-time');
+  await expect(root(page)).toBeVisible();
+}
+
+test('the authored scale beats separate text from counts and keep adding years through the closing question',async({page,request})=>{
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const source=await(await request.get('/data/scheduled-service.json')).json();
+  const total=source.rows.reduce((a,r)=>[a[0]+r.fatalAccidents,a[1]+r.departures],[0,0]);
+  await frozen(page);
+  await expect(root(page)).toHaveAttribute('data-beat','0');
+  expect(await values(page)).toEqual([0,0]);
+  await expect(page.locator('.scale-comparison__conclusion')).toBeHidden();
+  await next(page).click();await expect(root(page)).toHaveAttribute('data-beat','1');
+  await page.clock.runFor(1000);expect((await values(page))[0]).toBeGreaterThan(0);
+  expect((await values(page))[1]).toBe(0);
+  await next(page).click();expect(await values(page)).toEqual([3,0]);
+  await next(page).click();await expect(root(page)).toHaveAttribute('data-beat','2');
+  await expect(page.locator('.scale-comparison__conclusion')).toBeVisible();
+  expect(await values(page)).toEqual([3,0]);
+  await next(page).click();await expect(root(page)).toHaveAttribute('data-beat','2.5');
+  await page.clock.runFor(2500);expect((await values(page))[1]).toBeGreaterThan(0);expect((await values(page))[1]).toBeLessThan(source.rows[0].departures);
+  await next(page).click();expect(await values(page)).toEqual([3,source.rows[0].departures]);
+  await next(page).click();await expect(root(page)).toHaveAttribute('data-beat','3');
+  await expect(page.locator('.scale-comparison__one-year')).toBeVisible();
+  await next(page).click();await expect(root(page)).toHaveAttribute('data-beat','3.5');
+  await expect(page.locator('.scale-comparison__add-more')).toBeVisible();
+  await page.clock.runFor(1500);
+  const early=+(await root(page).getAttribute('data-year-elapsed'));
+  await next(page).click();await expect(root(page)).toHaveAttribute('data-beat','4');
+  await expect(page.locator('.scale-comparison__tiny')).toBeVisible();
+  await page.clock.runFor(1500);expect(+(await root(page).getAttribute('data-year-elapsed'))).toBeGreaterThan(early);
+  await next(page).click();await expect(root(page)).toHaveAttribute('data-beat','5');
+  await expect(page.locator('.scale-comparison__story-copy')).toBeHidden();
+  await expect(page.locator('.scale-comparison__analogy')).toBeVisible();
+  const analogy=await root(page).evaluate(e=>e.comparisonData);
+  expect(analogy.coinSequences).toBe(16777216);
+  expect(analogy.departuresPerAccident).toBeCloseTo(analogy.departures/analogy.fatalAccidents,8);
+  await page.clock.runFor(1500);
+  await next(page).click();await expect(root(page)).toHaveAttribute('data-beat','6');
+  await expect(page.locator('.scale-comparison__analogy')).toBeHidden();
+  await expect(page.locator('.scale-comparison__question')).toBeVisible();
+  expect((await values(page))[1]).toBeLessThan(total[1]);
+  await page.clock.runFor(10000);
+  await expect(root(page)).toHaveAttribute('data-playback','complete');
+  expect(await values(page)).toEqual(total);
+  await page.clock.fastForward(60000);await expect(page.locator('#change-over-time')).toHaveClass(/present/);
+  await next(page).click();await expect(page.locator('#counts-in-context')).toHaveClass(/present/);
+  expect(errors).toEqual([]);
+});
+
+test('automatic commentary and year accumulation finish on this slide, with pause, rewind and replay',async({page})=>{
+  await frozen(page,true);
+  await page.clock.runFor(8500);
+  await expect(root(page)).toHaveAttribute('data-beat','2.5');
+  await page.clock.runFor(7000);
+  await expect(root(page)).toHaveAttribute('data-beat','4');
+  const pause=root(page).getByRole('button',{name:'Pause',exact:true});
+  await pause.click();const held=await root(page).getAttribute('data-year-elapsed');
+  await page.clock.runFor(5000);expect(await root(page).getAttribute('data-year-elapsed')).toBe(held);
+  await root(page).getByRole('button',{name:'Resume',exact:true}).click();
+  await page.clock.runFor(18000);await expect(root(page)).toHaveAttribute('data-playback','complete');
+  await expect(root(page)).toHaveAttribute('data-beat','5');
+  await expect(root(page)).toHaveAttribute('data-heads','24');
+  await page.clock.fastForward(60000);
+  await expect(root(page)).toHaveAttribute('data-beat','5');
+  await expect(page.locator('.scale-comparison__question')).toBeHidden();
+  await next(page).click();await expect(root(page)).toHaveAttribute('data-beat','6');
+  await expect(page.locator('.scale-comparison__question')).toBeVisible();
+  await page.locator('[data-story-back]').click();await expect(root(page)).toHaveAttribute('data-beat','5');
+  await expect(page.locator('.scale-comparison__analogy')).toBeVisible();
+  const back=await root(page).getAttribute('data-year-elapsed');
+  await page.clock.runFor(5000);expect(await root(page).getAttribute('data-year-elapsed')).toBe(back);
+  await root(page).getByRole('button',{name:'Replay',exact:true}).click();
+  await expect(root(page)).toHaveAttribute('data-beat','0');expect(await values(page)).toEqual([0,0]);
+});
+
+test('coins flip to heads in order, pause with the chart, and reset when replayed',async({page})=>{
+  await frozen(page);
+  for(let i=0;i<9;i++)await next(page).click();
+  await expect(root(page)).toHaveAttribute('data-beat','5');
+  const coins=root(page).locator('.scale-comparison__coin');
+  await expect(coins).toHaveCount(24);
+  await expect(root(page)).toHaveAttribute('data-heads','0');
+  await page.clock.runFor(550);
+  await expect(coins.nth(0)).toHaveAttribute('data-face','flipping');
+  await expect(coins.nth(1)).toHaveAttribute('data-face','pending');
+  await page.clock.runFor(600);
+  const faces=await coins.evaluateAll(ns=>ns.map(n=>n.dataset.face));
+  expect(faces.slice(0,3)).toEqual(['heads','heads','heads']);
+  expect(faces.filter(f=>f==='flipping').length).toBeLessThanOrEqual(1);
+  expect(faces.slice(4).every(f=>f==='pending')).toBe(true);
+  await root(page).getByRole('button',{name:'Pause',exact:true}).click();
+  const held=await root(page).getAttribute('data-coin-elapsed');
+  await page.clock.runFor(5000);
+  expect(await root(page).getAttribute('data-coin-elapsed')).toBe(held);
+  await root(page).getByRole('button',{name:'Resume',exact:true}).click();
+  await page.clock.runFor(4000);
+  await expect(root(page)).toHaveAttribute('data-heads','24');
+  await expect(root(page).locator('.scale-comparison__coin[data-face="flipping"]')).toHaveCount(0);
+  await page.locator('[data-story-back]').click();
+  await next(page).click();
+  await expect(root(page)).toHaveAttribute('data-heads','0');
+  await root(page).getByRole('button',{name:'Replay',exact:true}).click();
+  await expect(root(page)).toHaveAttribute('data-coin-elapsed','0');
+});
+
+test('ongoing years suspend on Manual, inactive slides and hidden documents',async({page})=>{
+  await frozen(page,true);
+  for(let i=0;i<7;i++)await next(page).click();
+  await expect(root(page)).toHaveAttribute('data-beat','3.5');
+  await page.clock.runFor(450);
+  await page.locator('#playback-toggle').click();
+  const manual=await root(page).getAttribute('data-year-elapsed');
+  await page.clock.runFor(5000);expect(await root(page).getAttribute('data-year-elapsed')).toBe(manual);
+  await page.locator('#playback-toggle').click();await page.clock.runFor(100);
+  expect(await root(page).getAttribute('data-year-elapsed')).not.toBe(manual);
+  await page.evaluate(()=>location.hash='/another-perspective');
+  await expect(page.locator('#another-perspective')).toHaveClass(/present/);
+  const away=await root(page).getAttribute('data-year-elapsed');
+  await page.clock.runFor(5000);expect(await root(page).getAttribute('data-year-elapsed')).toBe(away);
+  await page.evaluate(()=>location.hash='/change-over-time');await expect(root(page)).toBeVisible();
+  await page.clock.runFor(100);expect(await root(page).getAttribute('data-year-elapsed')).not.toBe(away);
+  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'));});
+  const hidden=await root(page).getAttribute('data-year-elapsed');
+  await page.clock.runFor(5000);expect(await root(page).getAttribute('data-year-elapsed')).toBe(hidden);
+  await page.evaluate(()=>{Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'));});
+  await page.clock.runFor(100);expect(await root(page).getAttribute('data-year-elapsed')).not.toBe(hidden);
+});
+
+for(const[name,viewport]of [['short desktop',{width:1280,height:800}],['mobile',{width:390,height:844}]]) {
+  test(`${name}: the analogy and Pause remain above the fixed footer`,async({page})=>{
+    await page.setViewportSize(viewport);await frozen(page);
+    for(let i=0;i<9;i++)await next(page).click();
+    await expect(root(page)).toHaveAttribute('data-beat','5');
+    await expect(page.locator('.scale-comparison__analogy')).toBeVisible();
+    const footer=await page.locator('.presentation-footer').boundingBox();
+    const copy=await page.locator('.scale-comparison__analogy').boundingBox();
+    const controls=await page.locator('.scale-comparison__transport').boundingBox();
+    expect(copy.y+copy.height).toBeLessThanOrEqual(footer.y);
+    expect(controls.y+controls.height).toBeLessThanOrEqual(footer.y);
+    expect(await page.locator('.scale-comparison-view').evaluate(e=>e.scrollWidth<=e.clientWidth)).toBe(true);
+  });
+}

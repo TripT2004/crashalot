@@ -136,9 +136,16 @@ The cover uses the shared footer without enlarged keycaps or displaced hints. Th
 
 The Flight 1282 opening now follows the user's sequence: Oregon map / Portland pulse (0), date and location (1), airline (2), flight number (2.5), Portland International Airport departure (3), six-minute clause (4), panel separation and photograph together (4.5), safe return / no fatalities (5), personal question with all earlier copy retained (6), then a scene-wide fade to the data invitation (7). Auto remains slide-local and manual navigation retraces every beat. Reduced-motion Auto keeps the complete story readable instead of hiding it behind the final invitation.
 
-**Pending for slide 3 review:** remove “To see whether that picture holds beyond 2005, let’s add the following years.” The user explicitly deferred this edit until we reach slide 3; do not alter that slide during the opening revision.
+**Resolved in the November 6 slide 3 sequence revision:** removed “To see whether that picture holds beyond 2005, let’s add the following years.” The user explicitly deferred this edit until we reach slide 3; do not alter that slide during the opening revision.
 
 
 ## Whole-phrase reveal restored — November 6
 
 The user rejected the streaming experiment. Removed the streaming component, cursor, trial renderer links, dependency, and stream-specific navigation. Large headings must fade in together as complete phrases. Retained the requested panel/photo move to Beat 5 and its 1,300 ms suspense hold, with the later labels 6 (safe return), 7 (question), 8 (data invitation). The cover/footer, current team credit, Oregon map, accumulated narrative, and pending slide 3 edit remain as requested.
+
+
+## Scale comparison sequence — November 6
+
+After checkpointing and pushing the opening as `bcdc598`, the next slide now follows the user's 0 / 1 / 2 / 2.5 / 3 / 3.5 / 4 / 5 / 6 cues. Headline clauses fade in as complete phrases. First the fatal-accident count rises; the perspective clause appears; then departures rise. The lower text accumulates the one-year / add-more / tiny-fraction explanation, replaces it with a fair-coin scale comparison, then transitions to the historical-safety question. Years continue cumulatively through the last four cues, while commentary changes independently. The old deferred “To see whether that picture holds…” sentence is now gone. The script uses “fatal accidents,” matching the controlling source's count (which includes ground fatalities). Coin probability and observed accident/departure frequency are explicitly named as separate quantities. Source, timings, transport behavior, and the calculation are in [scheduled-service-source.md](scheduled-service-source.md).
+
+Follow-up: Auto now stops at Reveal 8 of 9 (the coin comparison). The final question opens only on explicit Next. Coins flip to heads one at a time using the same pausable D3 clock; reduced motion shows all 24 heads immediately while retaining the stop before the question.

@@ -27,13 +27,41 @@
 .scale-comparison__interval-end[hidden] { display:none; }
 
 .scale-comparison__callout { color:var(--bs-danger); }
-.scale-comparison__year-intro { font-size:clamp(17px,1.7vw,22px); line-height:1.4; margin:16px 0 0; opacity:0; }
-.scale-comparison__year-intro[aria-hidden="true"] { visibility:hidden; }
 
 .scale-comparison__transport { justify-content:space-between; min-height:48px; gap:24px; }
 .scale-comparison__conclusion { font-size:clamp(24px,2.7vw,40px); }
 .scale-comparison-view .evidence-heading h1 { font-size:clamp(34px,3.8vw,58px); }
 @media(max-height:780px) and (min-width:1000px) { .scale-comparison-view .evidence-heading h1{font-size:36px}.scale-comparison__conclusion{font-size:30px;margin-top:8px}.scale-comparison-view .evidence-heading{margin-bottom:10px;padding-bottom:12px} }
-@media(max-width:600px) { .scale-comparison__transport { gap:16px; align-items:flex-start; }.scale-comparison__year-intro{font-size:16px} }
 
 .scale-comparison__transport { justify-content:flex-end; min-height:32px; }
+
+/* Narrative cues share the same plot; the cumulative years keep moving below. */
+.scale-comparison__scope { font-size:11px; color:var(--bs-secondary-color); margin:0 0 8px; }
+.scale-comparison__conclusion { visibility:hidden; transition:opacity .5s ease,visibility .5s; }
+.scale-comparison__conclusion.is-visible { opacity:1; visibility:visible; }
+.scale-comparison__commentary { display:grid; align-items:center; min-height:112px; margin:8px 0 4px; }
+.scale-comparison__commentary>div,.scale-comparison__question { grid-area:1/1; opacity:0; visibility:hidden; transition:opacity .2s ease,visibility 0s linear .2s; }
+.scale-comparison__commentary .is-visible { opacity:1; visibility:visible; transition:opacity .35s ease .2s,visibility 0s linear .2s; }
+.scale-comparison__story-copy>p { opacity:0; visibility:hidden; transition:opacity .45s ease,visibility .45s; }
+.scale-comparison__one-year,.scale-comparison__add-more { display:inline; font-size:17px; line-height:1.6; margin:0 8px 0 0; color:var(--bs-secondary-color); }
+.scale-comparison__tiny { font:400 clamp(23px,2.2vw,31px)/1.25 Georgia,serif; letter-spacing:-.025em; margin:10px 0 0; }
+.scale-comparison__analogy { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:36px; }
+.scale-comparison__analogy h2 { font:400 clamp(25px,2.4vw,34px)/1.2 Georgia,serif; letter-spacing:-.025em; margin:0 0 8px; }
+.scale-comparison__analogy p { font-size:13px; line-height:1.6; margin:0; max-width:76ch; color:var(--bs-secondary-color); }
+.scale-comparison__coins { display:grid; grid-template-columns:repeat(12,19px); gap:5px; }
+.scale-comparison__coin { display:block; width:19px; height:19px; perspective:100px; }
+.scale-comparison__coin-inner { position:relative; display:block; width:100%; height:100%; transform-style:preserve-3d; }
+.scale-comparison__coin-back,.scale-comparison__coin-head { position:absolute; inset:0; display:grid; place-items:center; box-sizing:border-box; border:1px solid var(--bs-border-color); border-radius:50%; backface-visibility:hidden; }
+.scale-comparison__coin-back { background:var(--bs-tertiary-bg); }
+.scale-comparison__coin-head { transform:rotateY(180deg); background:var(--bs-body-bg); color:var(--bs-body-color); font:500 9px var(--bs-font-sans-serif); border-color:var(--bs-secondary-color); }
+.scale-comparison__question { font:400 clamp(28px,3vw,42px)/1.15 Georgia,serif; letter-spacing:-.035em; margin:0; }
+.scale-comparison__source { font-size:11px; color:var(--bs-secondary-color); }
+.scale-comparison__source p { max-width:100ch; line-height:1.6; }
+@media(max-width:600px) {
+  .scale-comparison__commentary { min-height:150px; align-items:start; margin-top:12px; }
+  .scale-comparison__analogy { grid-template-columns:1fr; gap:16px; }
+  .scale-comparison__one-year,.scale-comparison__add-more { font-size:16px; }
+  .scale-comparison__tiny { margin-top:12px; }
+  .scale-comparison__question { font-size:31px; max-width:19ch; }
+}
+@media(prefers-reduced-motion:reduce) { .scale-comparison__conclusion,.scale-comparison__commentary * { transition:none; } }

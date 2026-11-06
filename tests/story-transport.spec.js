@@ -26,12 +26,13 @@ test('Next stays fixed while settling running and paused scale beats; routes pre
   await next(page).click();
   expect(await scaleValues(page)).toEqual([rows[0].fatalAccidents, 0]);
   await expectStableNext(page, nextBounds);
-  await next(page).click();
+  await next(page).click(); // perspective text
   await expectStableNext(page, nextBounds);
-  await next(page).click();
+  await next(page).click(); // departure count
+  await next(page).click(); // settle departures
   expect(await scaleValues(page)).toEqual([rows[0].fatalAccidents, rows[0].departures]);
-  await next(page).click();
-  await next(page).click();
+  for (let beat=4; beat<=8; beat++) { await next(page).click();await expectStableNext(page,nextBounds); }
+  await next(page).click(); // settle remaining years on the closing question
   const totals = rows.reduce((a, r) => [a[0] + r.fatalAccidents, a[1] + r.departures], [0, 0]);
   expect(await scaleValues(page)).toEqual(totals);
   await next(page).click();
@@ -46,7 +47,7 @@ test('Next stays fixed while settling running and paused scale beats; routes pre
   expect(await scaleValues(page)).toEqual(totals);
   await page.locator('.scale-comparison__transport button', { hasText: 'Replay' }).click();
   expect(await scaleValues(page)).toEqual([0, 0]);
-  await expect(page.locator('[data-story-position]')).toHaveText('3 of 8 · Reveal 1 of 4');
+  await expect(page.locator('[data-story-position]')).toHaveText('3 of 8 · Reveal 1 of 9');
 });
 
 test('reading keys scroll the exploration without advancing; explicit footer still navigates', async ({ page }) => {
