@@ -29,10 +29,10 @@ Five beats, each one Next. The layout fills the space between the slide heading 
 | Beat | Panel | Chart |
 |---|---|---|
 | 1 | "Remember the 24 heads in a row?" Callback to slide 3's coin comparison | Dots pour in year by year, left to right; a rolling counter reaches 184,082,802 departures |
-| 2 | "Now add the 9 that had a fatal accident." | The 9 needles drop in one at a time in date order, with a ticker naming each; the counter ends at "9 of 9 · 99.999995% had none". Needles are drawn far larger than life, and the copy says so. |
-| 3 | "How often do you fly?" | Lifetime-odds calculator (slider, 1–100 flights a year, default 4) |
-| 4 | "Flight 1282 is in here too." Callback to the opening slide | The magnifier opens over Flight 1282's January 2024 dot, showing the NTSB cabin photograph with a leader line to the dot |
-| 5 | "Now find the needles yourself." | Exploration: click-to-zoom, brushing, linked readout, calculator and accident list |
+| 2 | "Even when something goes wrong." Every green dot is a departure without a fatal accident, including ones like Flight 1282. Callback to the opening slide. | Dashed ring on Flight 1282's January 2024 dot; a dashed-bordered circle shows the NTSB cabin photograph, with a dashed leader to the dot. No needles yet. |
+| 3 | "Now add the 9 that had a fatal accident." | The 9 needles drop in one at a time in date order, with a ticker naming each; the counter ends at "9 of 9 · 99.999995% had none". Needles are drawn far larger than life, and the copy and legend say so. |
+| 4 | "How often do you fly?" | Lifetime-odds calculator (slider, 1–100 flights a year, default 4) |
+| 5 | "Now find the needles yourself." | Exploration: click-to-magnify, brushing, linked readout, calculator and accident list |
 
 Auto plays through the beats and stops at beat 5. It never changes slides. Back and Next retrace the beats; Next during an animation finishes it. Reduced motion shows each beat's end state.
 
@@ -42,13 +42,12 @@ Odds that any of a reader's flights over 60 years is a departure with a fatal ac
 
 ## Interactions
 
-**Click-to-zoom with labeled levels.** Clicking a dot opens a circular magnifier at that spot. A persistent label always names the level:
+**Click to magnify.** There are no zoom buttons or zoom-level indicator. In exploration, clicking a dot (or an accident in the list) opens a circular magnifier at that spot. A legend above the chart names the scale (1 dot = 100,000 departures; red = departure with a fatal accident, enlarged), and the magnifier's own caption names its level:
 
-- Zoom 1 of 3 · ×1 · 1 dot = 100,000 departures
-- Zoom 2 of 3 · ×100 · 1 dot = 1,000 departures (the clicked dot's 100 sub-dots)
-- Zoom 3 of 3 · ×100,000 · 1 dot = 1 departure (1,000 single departures)
+- first click: the dot's 100 sub-dots, 1 dot = 1,000 departures; the one holding a needle is ringed in red;
+- second click: 1,000 single departures, 1 dot = 1 departure.
 
-At zoom 3 a needle shows as a single red departure with a tooltip (date, aircraft, fatal injuries). A non-needle dot reads "No fatal accident among these 1,000 departures." Zoom out steps back one level. "Zoom to a needle" cycles through the needles in the selected period.
+A needle shows as a single red departure with a tooltip (date, aircraft, fatal injuries). A dot without a needle reads "no fatal accident in these 1,000". Clicking outside the circle closes it.
 
 **Brushing and linking (course requirement).** Dragging across the year strip selects a period that snaps to whole years. The selection updates four linked views:
 
@@ -65,4 +64,4 @@ U.S. scheduled service only, not worldwide. If the team migrates slide 3 to a wo
 
 ## Verification
 
-`npx playwright test tests/safe-departures.spec.js` covers data reconciliation, all five beats and Back, the calculator values, the Flight 1282 photo lens, every zoom level, finding a needle, brush and select linking (including the calculator), Auto stopping at exploration without changing slides, and no scrolling at 1366×768. The full suite passes apart from `scale-sequence.spec.js › mobile: the analogy and Pause remain above the fixed footer`, which already fails on `main` before this change. Reviewed in light and dark themes at 1440×900, 1366×768 and 390×844.
+`npx playwright test tests/safe-departures.spec.js` covers data reconciliation, all five beats in order and Back, the calculator values, the dashed Flight 1282 callout before any needle appears, the absence of zoom buttons, both magnifier levels, finding a needle, brush and select linking (including the calculator), Auto stopping at exploration without changing slides, and no scrolling at 1366×768. The full suite passes apart from `scale-sequence.spec.js › mobile: the analogy and Pause remain above the fixed footer`, which already fails on `main` before this change. Reviewed in light and dark themes at 1440×900, 1366×768 and 390×844.

@@ -5,7 +5,7 @@ import { createBeatPlayback } from './beat-playback.js';
 // Needle in a haystack: every departure in the slide 3 cohort, drawn at three labeled zoom levels.
 const UNIT = 100000;           // Level 1: one dot = 100,000 departures.
 const YEARS_OF_FLYING = 60;
-const motion = { pourMs: 4200, dropMs: 3600, holds: [1600, 2600, 7000, 5200] };
+const motion = { pourMs: 4200, dropMs: 3600, holds: [1600, 5200, 2600, 7000] };
 const levels = [
   { label: 'Zoom 1 of 3 · ×1', unit: '1 dot = 100,000 departures' },
   { label: 'Zoom 2 of 3 · ×100', unit: '1 dot = 1,000 departures' },
@@ -14,12 +14,12 @@ const levels = [
 // Progress runs 0→1 while dots pour in, 1→2 while needles drop; later beats are not animated.
 const beats = [
   { end: 1, eyebrow: 'U.S. scheduled service · 2005–2024', title: 'Remember the 24 heads in a row?', text: 'That was 1 fatal accident per 20.5 million departures. Here are all 184,082,802 departures from that comparison, one dot for every 100,000.' },
+  { end: 1, eyebrow: 'Back to the beginning', title: 'Even when something goes wrong.', text: 'Every green dot is a departure without a fatal accident, including ones like Flight 1282, where a door plug blew out mid-climb.' },
   { end: 2, eyebrow: 'The needles', title: 'Now add the 9 that had a fatal accident.', text: 'Each red mark is one departure, drawn far larger than life: at this scale it is a hundred-thousandth of a dot. Everything else, 99.999995%, had no fatal accident.' },
   { end: 2, eyebrow: 'What it means for you', title: 'How often do you fly?', text: `Move the slider. The odds below are for any of your flights, over ${YEARS_OF_FLYING} years of flying, being a departure with a fatal accident.` },
-  { end: 2, eyebrow: 'Back to the beginning', title: 'Flight 1282 is in here too.', text: 'Its door plug blew out six minutes after takeoff, but it landed with no fatalities. It is one of the 99.999995%.' },
-  { end: 2, eyebrow: 'Your turn', title: 'Now find the needles yourself.', text: 'Click any dot to zoom down to single departures. Drag across the years to compare periods.' },
+  { end: 2, eyebrow: 'Your turn', title: 'Now find the needles yourself.', text: 'Click any dot to magnify it, down to single departures. Drag across the years to compare periods.' },
 ];
-const EXPLORE = beats.length - 1, CALC = 2, CALLBACK = 3;
+const EXPLORE = beats.length - 1, CALLBACK = 1, NEEDLES = 2, CALC = 3;
 const int = format(',d');
 const clamp = v => Math.max(0, Math.min(1, v));
 const millions = v => `${(v / 1e6).toFixed(1)} million`;
@@ -59,14 +59,7 @@ export async function mountSafeDepartures(container) {
   const grid = root.append('div').attr('class', 'safe-departures__grid');
   const plot = grid.append('div').attr('class', 'safe-departures__plot');
   const zoomBar = plot.append('div').attr('class', 'safe-departures__zoombar');
-  const zoomLabel = zoomBar.append('p').attr('class', 'safe-departures__zoom').attr('aria-live', 'polite');
-  const zoomControls = zoomBar.append('div');
-  const zoomOut = zoomControls.append('button').attr('type', 'button').attr('class', 'text-button').text('Zoom out').on('click', () => setZoom(zoom && zoom.level === 2 ? { ...zoom, level: 1, sub: null } : null));
-  zoomControls.append('button').attr('type', 'button').attr('class', 'text-button').text('Zoom to a needle').on('click', () => {
-    const pool = range ? needles.filter(d => inRange(d.year)) : needles;
-    const target = pool.length ? pool[(pool.indexOf(focused) + 1) % pool.length] : needles[0];
-    focusNeedle(target); setZoom({ dot: target, level: 1 });
-  });
+  const legend = zoomBar.append('p').attr('class', 'safe-departures__zoom').attr('aria-live', 'polite');
   const svg = plot.append('svg').attr('role', 'img')
     .attr('aria-label', 'Every U.S. scheduled departure from 2005 to 2024 as dots of 100,000, with the 9 departures that had a fatal accident marked in red');
   svg.append('desc').text(`${int(data.totals.departures)} departures in 20 yearly columns. 9 had a fatal accident: ${data.accidents.map(a => `${a.date} ${a.aircraft}`).join('; ')}. Flight 1282, a nonfatal accident on ${data.callout.date}, is among the departures without a fatal accident.`);
@@ -246,7 +239,7 @@ export async function mountSafeDepartures(container) {
     const dx = dot.x - cx, dy = dot.y - cy, dist = Math.hypot(dx, dy) || 1;
     lensLeader.attr('hidden', dist > lensR + 4 ? null : true).attr('x1', dx / dist * lensR).attr('y1', dy / dist * lensR).attr('x2', dx - dx / dist * step).attr('y2', dy - dy / dist * step);
     clipCircle.attr('cx', 0).attr('cy', 0).attr('r', lensR - 2);
-    lensBg.attr('r', lensR);
+    lensBg.attr('r', lensR).classed('is-dashed', !!view.photo);
     lensPhoto.attr('hidden', view.photo ? null : true).attr('x', -lensR).attr('y', -lensR).attr('width', lensR * 2).attr('height', lensR * 2);
     const gs = lensR / 150;
     lensCredit.attr('hidden', true);
@@ -262,7 +255,7 @@ export async function mountSafeDepartures(container) {
       lensDots.selectAll('circle').data(subs).join('circle').attr('cx', d => d.x).attr('cy', d => d.y).attr('r', 6.5 * gs)
         .attr('class', d => d.host ? 'is-needle-host' : null)
         .on('click', (event, d) => { event.stopPropagation(); setZoom({ dot, level: 2, sub: d.i }); });
-      lensCaption.attr('y', lensR - 26 * gs).text(needle ? 'One of these holds the needle · click to zoom' : `${dot.year} · click a dot to zoom further`);
+      lensCaption.attr('y', lensR - 26 * gs).text(needle ? '1 dot = 1,000 · one holds the needle · click it' : `${dot.year} · 1 dot = 1,000 · click one to go further`);
     } else {
       const hit = needle && needle.sub === view.sub;
       const leaves = Array.from({ length: 1000 }, (_, i) => ({ i, x: (i % 40 - 19.5) * 6 * gs, y: ((Math.floor(i / 40) - 12) * 6 - 10) * gs, red: hit && needle.leaf === i }));
@@ -271,7 +264,7 @@ export async function mountSafeDepartures(container) {
         .on('pointerenter', (event, d) => { if (d.red) showTip(event, needle); })
         .on('pointerleave', hideTip);
       lensDots.selectAll('circle.is-needle').raise();
-      lensCaption.attr('y', lensR - 26 * gs).text(hit ? `Found it: ${dateLabel(needle.date)} · ${needle.aircraft}` : 'No fatal accident among these 1,000 departures');
+      lensCaption.attr('y', lensR - 26 * gs).text(hit ? `1 dot = 1 departure · found it: ${dateLabel(needle.date)}` : '1 dot = 1 departure · no fatal accident in these 1,000');
     }
   }
 
@@ -292,15 +285,15 @@ export async function mountSafeDepartures(container) {
         .attr('transform', `translate(${d.x},${d.y - (1 - easeCubicOut(t)) * Math.min(160, d.y)})`);
     });
     needleSel.select('.safe-departures__needle').attr('r', Math.max(4, step * .55));
-    call.attr('opacity', stage === EXPLORE && inRange(callDot.year) ? 1 : 0);
+    call.attr('opacity', (stage === CALLBACK || stage === EXPLORE) && inRange(callDot.year) ? 1 : 0);
+    call.select('text').attr('opacity', stage === EXPLORE ? 1 : 0);
+    call.select('line').attr('opacity', stage === EXPLORE ? 1 : 0);
     cells.classed('is-faded', c => !inRange(c.year)).classed('has-fatal', c => c.fatalAccidents > 0);
     brushG.style('pointer-events', explore ? null : 'none').attr('opacity', explore ? 1 : 0);
     stripLabel.text(explore ? 'Fatal accidents per year · drag across years to select a period' : 'Fatal accidents per year');
     fromSel.property('value', s.from); toSel.property('value', s.to);
     const lvl = explore && zoom ? zoom.level : 0;
-    zoomLabel.html(stage === CALLBACK ? '<strong>Flight 1282</strong> · one dot among 184,082,802 departures' : `<strong>${levels[lvl].label}</strong> · ${levels[lvl].unit}`);
-    zoomControls.attr('hidden', explore ? null : true);
-    zoomOut.property('disabled', !zoom);
+    legend.html(stage === CALLBACK ? '<strong>Flight 1282</strong> · one dot among 184,082,802 departures' : explore && zoom ? `<strong>Magnified</strong> · ${levels[lvl].unit} · click outside the circle to close` : `<span class="safe-departures__key safe-departures__key--dot"></span>1 dot = 100,000 departures${stage >= NEEDLES ? '<span class="safe-departures__key safe-departures__key--needle"></span>departure with a fatal accident (enlarged)' : ''}`);
     const b = beats[stage];
     if (headline.text() !== b.title) {
       story.classed('is-changing', !reduced.matches);
@@ -310,11 +303,11 @@ export async function mountSafeDepartures(container) {
     // Rolling departure counter while the haystack fills, then the share without a fatal accident.
     const poured = columns.reduce((sum, c) => sum + c.departures * clamp(pour * 20 - c.i), 0);
     const dropped = needles.filter(d => clamp(drop * needles.length - d.needle.order) > 0).length;
-    counter.attr('hidden', stage <= 1 ? null : true).html(stage === 0
+    counter.attr('hidden', stage === 0 || stage === NEEDLES ? null : true).html(stage === 0
       ? `<span class="safe-departures__big">${int(Math.round(poured))}</span><span>departures</span>`
       : `<span class="safe-departures__big safe-departures__big--fatal">${dropped} of 9</span><span>departures with a fatal accident</span>${dropped === 9 ? '<span class="safe-departures__share">99.999995% had none</span>' : ''}`);
     const latest = needles.filter(d => clamp(drop * needles.length - d.needle.order) > 0).at(-1);
-    ticker.attr('hidden', stage === 1 && latest ? null : true).text(latest ? `${dateLabel(latest.needle.date)} · ${latest.needle.aircraft} · ${latest.needle.fatalities} fatal` : '');
+    ticker.attr('hidden', stage === NEEDLES && latest ? null : true).text(latest ? `${dateLabel(latest.needle.date)} · ${latest.needle.aircraft} · ${latest.needle.fatalities} fatal` : '');
     readout.attr('hidden', explore ? null : true).html(
       `<p class="safe-departures__period-label">${range ? 'Selected period' : 'All years'} · ${s.from}–${s.to}</p>`
       + `<p class="safe-departures__pct">${pct(s.fatal, s.departures)}</p>`
@@ -342,7 +335,7 @@ export async function mountSafeDepartures(container) {
     if (reduced.matches) { progress = end; finish(); return; }
     running = true; notify();
     const start = progress;
-    const ms = (end - start) * (stage === 0 ? motion.pourMs : motion.dropMs);
+    const ms = (end - start) * (start < 1 ? motion.pourMs : motion.dropMs);
     root.transition('reveal').duration(ms).ease(easeLinear).tween('reveal', () => t => { progress = start + (end - start) * t; render(); }).on('end', finish);
   }
   function enter(next) {

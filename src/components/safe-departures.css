@@ -30,6 +30,11 @@
 .safe-departures__lens circle:not(.safe-departures__lens-bg) { fill:var(--viz-series-2); cursor:zoom-in; }
 .safe-departures__lens circle.is-needle-host { stroke:var(--bs-danger); stroke-width:2.5; }
 .safe-departures__lens circle.is-needle { fill:var(--bs-danger); cursor:help; }
+.safe-departures__lens-bg.is-dashed { stroke-dasharray:8 6; stroke-width:2.5; }
+.safe-departures__key { display:inline-block; width:9px; height:9px; border-radius:50%; margin:0 6px 0 14px; vertical-align:-1px; }
+.safe-departures__key:first-child { margin-left:0; }
+.safe-departures__key--dot { background:var(--viz-series-2); }
+.safe-departures__key--needle { background:var(--bs-danger); }
 .safe-departures__lens-leader { stroke:var(--bs-body-color); stroke-width:1.2; stroke-dasharray:4 3; }
 .safe-departures__lens-caption.is-on-photo { font-size:13px; font-weight:600; fill:#fff; stroke:rgba(0,0,0,.65); }
 .safe-departures__lens-credit { font-size:10px; fill:#fff; paint-order:stroke; stroke:rgba(0,0,0,.55); stroke-width:3px; }

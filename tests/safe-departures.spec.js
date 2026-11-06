@@ -19,7 +19,7 @@ test('data matches the slide 3 cohort and the audited accidents', async ({ reque
   for (const y of data.years) expect(data.accidents.filter(a => a.date.startsWith(String(y.year)))).toHaveLength(y.fatalAccidents);
 });
 
-test('five beats: pour-in, needle drop, calculator, Flight 1282, exploration', async ({ page }) => {
+test('five beats: pour-in, Flight 1282, needle drop, calculator, exploration', async ({ page }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await manual(page);
   await expect(chart(page)).toHaveAttribute('data-stage', '0');
@@ -29,6 +29,13 @@ test('five beats: pour-in, needle drop, calculator, Flight 1282, exploration', a
   await expect(chart(page).locator('.safe-departures__counter')).toContainText('184,082,802');
   await next(page).click();
   await expect(chart(page)).toHaveAttribute('data-stage', '1');
+  await expect(chart(page).locator('h2')).toHaveText('Even when something goes wrong.');
+  await expect(chart(page).locator('.safe-departures__lens image')).not.toHaveAttribute('hidden', /.*/);
+  await expect(chart(page).locator('.safe-departures__lens-bg')).toHaveClass(/is-dashed/);
+  await expect(chart(page).locator('.safe-departures__call')).toHaveAttribute('opacity', '1');
+  await expect(chart(page).locator('.safe-departures__needles g[opacity="1"]')).toHaveCount(0);
+  await next(page).click();
+  await expect(chart(page)).toHaveAttribute('data-stage', '2');
   await expect(chart(page)).toHaveAttribute('data-progress', '2.00', { timeout: 8000 });
   await expect(chart(page).locator('.safe-departures__counter')).toContainText('9 of 9');
   await expect(chart(page).locator('.safe-departures__counter')).toContainText('99.999995% had none');
@@ -37,9 +44,6 @@ test('five beats: pour-in, needle drop, calculator, Flight 1282, exploration', a
   await expect(chart(page).locator('.safe-departures__odds')).toContainText('1 in 85,000');
   await chart(page).locator('#safe-departures-flights').fill('25');
   await expect(chart(page).locator('.safe-departures__odds')).toContainText('1 in 14,000');
-  await next(page).click();
-  await expect(chart(page).locator('h2')).toHaveText('Flight 1282 is in here too.');
-  await expect(chart(page).locator('.safe-departures__lens image')).not.toHaveAttribute('hidden', /.*/);
   await next(page).click();
   await expect(chart(page)).toHaveAttribute('data-stage', '4');
   await page.locator('[data-story-back]').click();
@@ -50,20 +54,18 @@ test('five beats: pour-in, needle drop, calculator, Flight 1282, exploration', a
 
 async function explore(page) { await manual(page); for (let i = 0; i < 12 && (await chart(page).getAttribute('data-stage')) !== '4'; i++) { await next(page).click(); await page.waitForTimeout(80); } await expect(chart(page)).toHaveAttribute('data-stage', '4'); }
 
-test('click-to-zoom has three labeled levels and finds a needle', async ({ page }) => {
+test('no zoom buttons; clicking magnifies with the scale named in the lens', async ({ page }) => {
   await explore(page);
-  const label = chart(page).locator('.safe-departures__zoom');
-  await expect(label).toContainText('Zoom 1 of 3');
-  await chart(page).getByRole('button', { name: 'Zoom to a needle' }).click();
-  await expect(label).toContainText('Zoom 2 of 3 · ×100 · 1 dot = 1,000 departures');
+  await expect(chart(page).getByRole('button', { name: /zoom/i })).toHaveCount(0);
+  await chart(page).locator('.safe-departures__list li').first().click();
+  await expect(chart(page)).toHaveAttribute('data-zoom', '1');
+  await expect(chart(page).locator('.safe-departures__lens-caption')).toContainText('1 dot = 1,000');
   await chart(page).locator('.safe-departures__lens circle.is-needle-host').click();
-  await expect(label).toContainText('Zoom 3 of 3 · ×100,000 · 1 dot = 1 departure');
+  await expect(chart(page)).toHaveAttribute('data-zoom', '2');
   await expect(chart(page).locator('.safe-departures__lens circle.is-needle')).toHaveCount(1);
-  await expect(chart(page).locator('.safe-departures__lens-caption')).toContainText('Found it');
-  await chart(page).getByRole('button', { name: 'Zoom out' }).click();
-  await expect(label).toContainText('Zoom 2 of 3');
-  await chart(page).getByRole('button', { name: 'Zoom out' }).click();
-  await expect(label).toContainText('Zoom 1 of 3');
+  await expect(chart(page).locator('.safe-departures__lens-caption')).toContainText('found it');
+  await chart(page).locator('.safe-departures__strip-label').click({ force: true });
+  await expect(chart(page)).toHaveAttribute('data-zoom', '0');
 });
 
 test('brushing the year strip links the haystack, readout and accident list', async ({ page }) => {
