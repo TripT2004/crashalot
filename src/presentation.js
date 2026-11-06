@@ -64,26 +64,55 @@ function loadStylesheet(url) {
   });
 }
 
-async function setTheme(name) {
+async function revealTheme(apply) {
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { apply(); return; }
+  const root = document.documentElement;
+  if (!document.startViewTransition) {
+    root.classList.add('theme-crossfade');
+    apply();
+    await new Promise(resolve => setTimeout(resolve, 350));
+    root.classList.remove('theme-crossfade');
+    return;
+  }
+  const bounds = themeToggle.getBoundingClientRect();
+  const x = bounds.x + bounds.width / 2, y = bounds.y + bounds.height / 2;
+  const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  root.classList.add('theme-reveal');
+  try {
+    const transition = document.startViewTransition(apply);
+    try {
+      await transition.ready;
+      root.animate({ clipPath:[`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] }, {
+        duration:650, easing:'cubic-bezier(.4,0,.2,1)', pseudoElement:'::view-transition-new(root)',
+      });
+    } catch { /* A skipped snapshot still applies the selected theme. */ }
+    await transition.finished.catch(() => {});
+  } finally { root.classList.remove('theme-reveal'); }
+}
+
+async function setTheme(name, { animate = false } = {}) {
   const selected = themeOptions[name] ? name : 'default';
   const theme = themeOptions[selected];
   themeToggle.disabled = true;
   status.textContent = 'Applying theme…';
   try {
     const next = await loadStylesheet(theme.url);
-    const previous = document.querySelector('#presentation-theme');
-    previous.removeAttribute('id');
-    next.id = 'presentation-theme';
-    next.media = 'all';
-    document.documentElement.dataset.bsTheme = theme.mode;
-    const palette = theme.mode === 'dark' ? [0, 2, 8, 6] : [1, 3, 9, 11];
-    palette.forEach((colorIndex, index) => document.documentElement.style.setProperty(`--viz-series-${index + 1}`, schemePaired[colorIndex]));
-    previous.remove();
-    currentTheme = selected;
-    themeToggle.setAttribute('aria-pressed', String(theme.mode === 'light'));
-    themeToggle.title = theme.mode === 'dark' ? 'Cabin light off · click for light mode' : 'Cabin light on · click for dark mode';
-    try { localStorage.setItem('crashalot-component-theme', selected); } catch { /* Theme persistence is optional. */ }
-    window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: selected } }));
+    const apply = () => {
+      const previous = document.querySelector('#presentation-theme');
+      previous.removeAttribute('id');
+      next.id = 'presentation-theme';
+      next.media = 'all';
+      document.documentElement.dataset.bsTheme = theme.mode;
+      const palette = theme.mode === 'dark' ? [0, 2, 8, 6] : [1, 3, 9, 11];
+      palette.forEach((colorIndex, index) => document.documentElement.style.setProperty(`--viz-series-${index + 1}`, schemePaired[colorIndex]));
+      previous.remove();
+      currentTheme = selected;
+      themeToggle.setAttribute('aria-pressed', String(theme.mode === 'light'));
+      themeToggle.title = theme.mode === 'dark' ? 'Cabin light off · click for light mode' : 'Cabin light on · click for dark mode';
+      try { localStorage.setItem('crashalot-component-theme', selected); } catch { /* Theme persistence is optional. */ }
+      window.dispatchEvent(new CustomEvent('themechange', { detail: { theme: selected } }));
+    };
+    if (animate) await revealTheme(apply); else apply();
     status.textContent = '';
   } catch {
     if (!document.querySelector('#presentation-theme').getAttribute('href') && selected !== 'default') {
@@ -94,7 +123,7 @@ async function setTheme(name) {
     themeToggle.disabled = false;
   }
 }
-themeToggle.addEventListener('click', () => setTheme(currentTheme === 'darkly' ? 'default' : 'darkly'));
+themeToggle.addEventListener('click', () => setTheme(currentTheme === 'darkly' ? 'default' : 'darkly', { animate:true }));
 let savedTheme = 'default';
 try { savedTheme = localStorage.getItem('crashalot-component-theme') || 'default'; } catch { /* Theme persistence is optional. */ }
 setTheme(savedTheme);
