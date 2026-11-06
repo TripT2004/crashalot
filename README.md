@@ -49,7 +49,7 @@ Run `npm run test:flight` for the linked-exploration regression checks, and `npx
 
 ## Central reveal: needle in a haystack
 
-The seventh slide, `#/the-whole-picture`, shows every 2005–2024 U.S. scheduled departure from the slide 3 NTSB cohort as dots of 100,000, with the 9 departures that had a fatal accident as needles. Click a dot to zoom (three labeled levels, down to one dot per departure). Brushing the year strip links the haystack, the percentage readout and the accident list. See [source and interaction notes](docs/safe-departures-source.md). Run `npx playwright test tests/safe-departures.spec.js` for its checks.
+The seventh slide, `#/the-whole-picture`, shows every 2005–2024 U.S. scheduled departure from the slide 3 NTSB cohort as dots of 100,000 that pour in year by year, then drops in the 9 departures that had a fatal accident as needles. A lifetime-odds slider and a Flight 1282 callback follow. In exploration, click a dot to zoom (three labeled levels, down to one dot per departure). Brushing the year strip links the haystack, the percentage readout, the odds calculator and the accident list. See [source and interaction notes](docs/safe-departures-source.md). Run `npx playwright test tests/safe-departures.spec.js` for its checks.
 
 ## Presentation playback
 

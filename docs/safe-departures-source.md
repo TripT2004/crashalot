@@ -24,13 +24,21 @@ Share of departures without a fatal accident = 1 − 9 / 184,082,802 = **99.9999
 
 ## Story beats
 
+Five beats, each one Next. The layout fills the space between the slide heading and the footer at any window size, so the slide does not scroll on desktop. It picks the dots-per-row that gives the largest dots.
+
 | Beat | Panel | Chart |
 |---|---|---|
-| 1 | "Remember the 24 heads in a row?" Callback to slide 3's coin comparison and the 1-in-20.5-million ratio | Full haystack |
-| 2 | "99.999995% of departures had no fatal accident." Callback to the Flight 1282 opening | Flight 1282 ring appears |
-| 3 | "Now find the needles." Invitation to explore | Red rings on the 9 needle dots; readout, period selectors and accident list appear |
+| 1 | "Remember the 24 heads in a row?" Callback to slide 3's coin comparison | Dots pour in year by year, left to right; a rolling counter reaches 184,082,802 departures |
+| 2 | "Now add the 9 that had a fatal accident." | The 9 needles drop in one at a time in date order, with a ticker naming each; the counter ends at "9 of 9 · 99.999995% had none". Needles are drawn far larger than life, and the copy says so. |
+| 3 | "How often do you fly?" | Lifetime-odds calculator (slider, 1–100 flights a year, default 4) |
+| 4 | "Flight 1282 is in here too." Callback to the opening slide | The magnifier opens over Flight 1282's January 2024 dot, showing the NTSB cabin photograph with a leader line to the dot |
+| 5 | "Now find the needles yourself." | Exploration: click-to-zoom, brushing, linked readout, calculator and accident list |
 
-Auto advances within the slide and stops at beat 3. It never changes slides. Back and Next retrace the beats. Reduced motion shows the final state.
+Auto plays through the beats and stops at beat 5. It never changes slides. Back and Next retrace the beats; Next during an animation finishes it. Reduced motion shows each beat's end state.
+
+## Lifetime-odds calculator
+
+Odds that any of a reader's flights over 60 years is a departure with a fatal accident, treating each flight as an independent draw at the observed rate p = fatal accidents ÷ departures: 1 − (1 − p)^(flights per year × 60), rounded to two significant figures. All years: 4 flights a year gives about 1 in 85,000, and 25 a year about 1 in 14,000. The panel states that this counts departures with a fatal accident, not the reader's chance of being hurt, since 6 of the 9 had a single fatality. During exploration the calculator follows the brushed period, which makes it a fourth linked view. A period with no recorded fatal accident shows no odds and states that zero recorded is not zero risk.
 
 ## Interactions
 
@@ -42,13 +50,14 @@ Auto advances within the slide and stops at beat 3. It never changes slides. Bac
 
 At zoom 3 a needle shows as a single red departure with a tooltip (date, aircraft, fatal injuries). A non-needle dot reads "No fatal accident among these 1,000 departures." Zoom out steps back one level. "Zoom to a needle" cycles through the needles in the selected period.
 
-**Brushing and linking (course requirement).** Dragging across the year strip selects a period that snaps to whole years. The selection updates three linked views:
+**Brushing and linking (course requirement).** Dragging across the year strip selects a period that snaps to whole years. The selection updates four linked views:
 
 - the haystack: columns outside the period fade;
 - the readout: percentage, departure count and fatal-accident ratio for the period;
+- the lifetime-odds calculator: odds at that period's rate;
 - the accident list: the accidents in that period.
 
-Hovering a list item highlights its ring, and clicking it zooms to that needle. From/To selects and an All years button provide a keyboard equivalent. A period with no recorded fatal accident (e.g. 2010–2017, 73,653,256 departures) shows 100% with the note "That is an observation, not proof of zero risk."
+Hovering a list item highlights its ring, and clicking it zooms to that needle. From/To selects and an All years button provide a keyboard equivalent. A period with no recorded fatal accident (e.g. 2010–2017, 73,653,256 departures) shows 100%, and the calculator notes that zero recorded is not zero risk.
 
 ## Limits stated on the page
 
@@ -56,4 +65,4 @@ U.S. scheduled service only, not worldwide. If the team migrates slide 3 to a wo
 
 ## Verification
 
-`npx playwright test tests/safe-departures.spec.js` covers data reconciliation, all three beats and Back, every zoom level, finding a needle, brush and select linking, and Auto never changing slides. The full suite passes apart from `scale-sequence.spec.js › mobile: the analogy and Pause remain above the fixed footer`, which already fails on `main` before this change. Reviewed in light and dark themes at 1440×900 and 390×844.
+`npx playwright test tests/safe-departures.spec.js` covers data reconciliation, all five beats and Back, the calculator values, the Flight 1282 photo lens, every zoom level, finding a needle, brush and select linking (including the calculator), Auto stopping at exploration without changing slides, and no scrolling at 1366×768. The full suite passes apart from `scale-sequence.spec.js › mobile: the analogy and Pause remain above the fixed footer`, which already fails on `main` before this change. Reviewed in light and dark themes at 1440×900, 1366×768 and 390×844.
